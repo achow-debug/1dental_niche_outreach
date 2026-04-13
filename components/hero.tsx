@@ -2,10 +2,12 @@
 
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
+import { AnimatedGradientMesh } from "@/components/animated-gradient-mesh"
 import { Shield, Clock, Heart, Sparkles } from "lucide-react"
 
 interface HeroProps {
   onBookClick: () => void
+  onLearnMoreClick: () => void
 }
 
 const trustPoints = [
@@ -14,11 +16,11 @@ const trustPoints = [
   { icon: Clock, text: "Same-week appointments" },
 ]
 
-export function Hero({ onBookClick }: HeroProps) {
+export function Hero({ onBookClick, onLearnMoreClick }: HeroProps) {
   return (
     <section className="relative pt-24 pb-16 md:pt-32 md:pb-24 overflow-hidden">
-      {/* Subtle background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-accent/30 to-background" />
+      {/* Animated gradient mesh background */}
+      <AnimatedGradientMesh />
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -40,14 +42,20 @@ export function Hero({ onBookClick }: HeroProps) {
               Modern private care designed around you.
             </p>
             
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center">
               <Button 
                 onClick={onBookClick}
                 size="lg"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 h-14 text-base font-medium shadow-md hover:shadow-lg transition-all"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 h-14 text-base font-medium shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 Book Appointment
               </Button>
+              <button 
+                onClick={onLearnMoreClick}
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors underline underline-offset-4 decoration-primary/30 hover:decoration-primary"
+              >
+                Learn why patients choose us
+              </button>
             </div>
             
             {/* Trust Points */}
