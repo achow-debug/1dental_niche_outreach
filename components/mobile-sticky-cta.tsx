@@ -1,0 +1,20 @@
+"use client"
+
+import { Button } from "@/components/ui/button"
+
+interface MobileStickyCTAProps {
+  onBookClick: () => void
+}
+
+export function MobilestickyCTA({ onBookClick }: MobileStickyCTAProps) {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-card/95 backdrop-blur-md border-t border-border p-4 safe-area-pb">
+      <Button 
+        onClick={onBookClick}
+        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-12 font-medium shadow-lg"
+      >
+        Book Appointment
+      </Button>
+    </div>
+  )
+}
