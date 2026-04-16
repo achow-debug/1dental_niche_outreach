@@ -42,7 +42,7 @@ const promises = [
 
 export function PricingSection({ onBookClick }: PricingSectionProps) {
   return (
-    <section className="py-20 md:py-28 bg-background">
+    <section id="pricing" className="py-20 md:py-28 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-16">
@@ -104,7 +104,8 @@ export function PricingSection({ onBookClick }: PricingSectionProps) {
             
             <Button 
               onClick={onBookClick}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-12 font-medium"
+              variant="cta"
+              className="h-12 w-full font-medium"
             >
               Book Appointment
             </Button>

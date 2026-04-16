@@ -89,8 +89,8 @@ export function Treatments({ onBookClick }: TreatmentsProps) {
         <div className="text-center mt-12">
           <Button 
             onClick={onBookClick}
-            size="lg"
-            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 h-12 font-medium"
+            variant="cta"
+            className="h-12 px-8 font-medium"
           >
             Book Appointment
           </Button>

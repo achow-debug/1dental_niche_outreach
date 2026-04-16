@@ -47,8 +47,8 @@ export function LeadMagnet() {
               
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button 
-                  size="lg"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 h-14 font-bold shadow-lg shadow-primary/20"
+                  variant="cta"
+                  className="h-14 px-8 font-bold shadow-lg shadow-primary/20"
                 >
                   Get the Free Guide
                   <ArrowRight className="ml-2 w-4 h-4 opacity-70" />
@@ -65,6 +65,7 @@ export function LeadMagnet() {
                   src="/images/clinic-interior.jpg" 
                   alt="Carter Dental Studio Patient Information Guide"
                   fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-cover opacity-90"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />

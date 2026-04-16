@@ -95,8 +95,8 @@ export function WhyBookModal({ isOpen, onClose, onBookClick }: WhyBookModalProps
         <div className="pt-4 border-t border-border/50">
           <Button
             onClick={handleBookClick}
-            size="lg"
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-14 text-base font-medium shadow-md hover:shadow-lg transition-all group"
+            variant="cta"
+            className="group h-14 w-full text-base font-medium shadow-md hover:shadow-lg"
           >
             Book Appointment
             <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />

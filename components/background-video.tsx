@@ -12,7 +12,7 @@ export function BackgroundVideo() {
   }, [])
 
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden="true">
       <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px] z-10" />
       <video
         ref={videoRef}

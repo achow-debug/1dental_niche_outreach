@@ -48,7 +48,11 @@ export default function BookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="min-h-screen bg-background outline-none"
+    >
       {/* Header */}
       <header className="bg-card border-b border-border">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
@@ -68,6 +72,10 @@ export default function BookingPage() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
+        <p className="mb-8 rounded-2xl border border-border bg-muted/50 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
+          <span className="font-medium text-foreground">Demo booking:</span> dates and times shown are{" "}
+          <strong>examples</strong> of typical availability. The team will confirm real appointments with you.
+        </p>
         {/* Progress indicator */}
         {step !== "confirmation" && (
           <div className="mb-10">
@@ -207,8 +215,8 @@ export default function BookingPage() {
             <Button
               onClick={() => setStep("details")}
               disabled={!selectedDate || !selectedTime}
-              size="lg"
-              className="w-full mt-10 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-14 font-medium disabled:opacity-50"
+              variant="cta"
+              className="mt-10 h-14 w-full font-medium disabled:opacity-50"
             >
               Continue
             </Button>
@@ -304,8 +312,8 @@ export default function BookingPage() {
             <Button
               onClick={() => setStep("confirmation")}
               disabled={!formData.name || !formData.email || !formData.phone}
-              size="lg"
-              className="w-full mt-8 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-14 font-medium disabled:opacity-50"
+              variant="cta"
+              className="mt-8 h-14 w-full font-medium disabled:opacity-50"
             >
               Confirm Booking
             </Button>
@@ -373,16 +381,13 @@ export default function BookingPage() {
             </div>
 
             <Link href="/">
-              <Button
-                size="lg"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-10 h-14 font-medium"
-              >
+              <Button variant="cta" className="h-14 px-10 font-medium">
                 Return to website
               </Button>
             </Link>
           </div>
         )}
       </div>
-    </div>
+    </main>
   )
 }

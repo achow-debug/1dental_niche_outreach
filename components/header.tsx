@@ -7,7 +7,8 @@ import { Menu, X } from "lucide-react"
 
 const navLinks = [
   { label: "Treatments", href: "#treatments" },
-  { label: "About", href: "#about" },
+  { label: "About", href: "#why-us" },
+  { label: "Pricing", href: "#pricing" },
   { label: "Reviews", href: "#reviews" },
   { label: "FAQ", href: "#faq" },
 ]
@@ -71,7 +72,8 @@ export function Header({ onBookClick }: HeaderProps) {
           <div className="hidden md:block">
             <Button 
               onClick={onBookClick}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-7 h-11 font-semibold text-sm shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
+              variant="cta"
+              className="h-11 px-7 text-sm"
             >
               Book a visit
             </Button>
@@ -107,7 +109,8 @@ export function Header({ onBookClick }: HeaderProps) {
                 setIsMobileMenuOpen(false)
                 onBookClick()
               }}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl h-14 font-semibold text-base mt-6 shadow-lg shadow-primary/20"
+              variant="cta"
+              className="mt-6 h-14 w-full rounded-2xl text-base shadow-lg shadow-primary/20"
             >
               Book a visit
             </Button>

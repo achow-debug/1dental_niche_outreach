@@ -14,6 +14,7 @@ export function OurPromise() {
                 src="/images/dr-carter-portrait.jpg"
                 alt="Dr. Amelia Carter, Lead Dentist at Carter Dental Studio"
                 fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover hover:scale-105 transition-transform duration-1000"
                 onError={(e) => {
                   e.currentTarget.src = "https://images.unsplash.com/photo-1559839734-2b71f1e3c770?auto=format&fit=crop&q=80&w=1000"

@@ -49,8 +49,8 @@ export function FinalCTA({ onBookClick }: FinalCTAProps) {
         <div className="inline-flex flex-col items-center gap-6">
           <Button 
             onClick={onBookClick}
-            size="lg"
-            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-16 h-20 text-xl font-bold shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all group"
+            variant="cta"
+            className="group h-20 px-16 text-xl font-bold shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95"
           >
             Book My Appointment
             <ArrowRight className="ml-3 w-6 h-6 transition-transform group-hover:translate-x-1" />

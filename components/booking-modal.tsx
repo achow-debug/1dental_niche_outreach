@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import {
   Dialog,
   DialogContent,
@@ -76,6 +77,10 @@ export function BookingModal({ isOpen, onClose, onSuccess }: BookingModalProps) 
       <p className="text-sm text-muted-foreground leading-relaxed">
         Tell us what you&apos;re hoping to visit us for — we&apos;ll take it from there.
       </p>
+      <p className="rounded-xl border border-border bg-muted/40 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+        <span className="font-medium text-foreground">Demo booking:</span> dates and times below are{" "}
+        <strong>examples</strong> of typical availability. A team member will confirm real slots with you.
+      </p>
       <div className="grid gap-3">
         {treatments.map((treatment) => (
           <button
@@ -94,6 +99,13 @@ export function BookingModal({ isOpen, onClose, onSuccess }: BookingModalProps) 
           </button>
         ))}
       </div>
+      <p className="text-center text-xs text-muted-foreground">
+        Prefer the full-page form?{" "}
+        <Link href="/book" className="font-medium text-primary underline-offset-4 hover:underline" onClick={handleClose}>
+          Open the booking page
+        </Link>
+        .
+      </p>
     </div>
   )
 
@@ -106,6 +118,10 @@ export function BookingModal({ isOpen, onClose, onSuccess }: BookingModalProps) 
         <ArrowLeft className="w-4 h-4" />
         Back to visit type
       </button>
+
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        Example calendar below — final times are confirmed with the practice.
+      </p>
 
       <div>
         <p className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
@@ -156,7 +172,8 @@ export function BookingModal({ isOpen, onClose, onSuccess }: BookingModalProps) 
       <Button
         onClick={() => setStep("details")}
         disabled={!selectedDate || !selectedTime}
-        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-12 font-medium disabled:opacity-50"
+        variant="cta"
+        className="h-12 w-full font-medium disabled:opacity-50"
       >
         Continue
       </Button>
@@ -233,7 +250,8 @@ export function BookingModal({ isOpen, onClose, onSuccess }: BookingModalProps) 
       <Button
         onClick={() => setStep("confirmation")}
         disabled={!formData.name || !formData.email || !formData.phone}
-        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-12 font-medium disabled:opacity-50"
+        variant="cta"
+        className="h-12 w-full font-medium disabled:opacity-50"
       >
         Send my booking request
       </Button>
@@ -292,7 +310,8 @@ export function BookingModal({ isOpen, onClose, onSuccess }: BookingModalProps) 
 
       <Button
         onClick={handleComplete}
-        className="w-full mt-8 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-12 font-medium"
+        variant="cta"
+        className="mt-8 h-12 w-full font-medium"
       >
         Done
       </Button>

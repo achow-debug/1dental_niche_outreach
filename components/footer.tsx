@@ -10,15 +10,17 @@ interface FooterProps {
 
 const navLinks = [
   { label: "Treatments", href: "#treatments" },
-  { label: "About", href: "#about" },
+  { label: "About", href: "#why-us" },
+  { label: "Team", href: "#team" },
+  { label: "Pricing", href: "#pricing" },
   { label: "Reviews", href: "#reviews" },
   { label: "FAQ", href: "#faq" },
 ]
 
 const legalLinks = [
-  { label: "Privacy Policy", href: "#" },
-  { label: "Terms of Service", href: "#" },
-  { label: "Accessibility", href: "#" },
+  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Terms of Service", href: "/terms" },
+  { label: "Accessibility", href: "/accessibility" },
 ]
 
 export function Footer({ onBookClick }: FooterProps) {
@@ -47,7 +49,8 @@ export function Footer({ onBookClick }: FooterProps) {
             </p>
             <Button 
               onClick={onBookClick}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 h-12 font-bold shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+              variant="cta"
+              className="h-12 px-8 font-bold shadow-lg shadow-primary/20"
             >
               Book a visit
             </Button>
@@ -76,18 +79,33 @@ export function Footer({ onBookClick }: FooterProps) {
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-sm text-muted-foreground">
+                <a
+                  href="https://www.google.com/maps/search/?api=1&query=123+Dental+Street+Manchester+M1+2AB"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
                   123 Dental Street<br />
                   Manchester, M1 2AB
-                </span>
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-primary shrink-0" />
-                <span className="text-sm text-muted-foreground">0161 123 4567</span>
+                <a
+                  href="tel:+441611234567"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  0161 123 4567
+                </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-primary shrink-0" />
-                <span className="text-sm text-muted-foreground">hello@carterdentalstudio.co.uk</span>
+                <a
+                  href="mailto:hello@carterdentalstudio.co.uk"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  hello@carterdentalstudio.co.uk
+                </a>
               </li>
             </ul>
           </div>

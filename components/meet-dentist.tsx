@@ -10,7 +10,7 @@ const credentials = [
 
 export function MeetDentist() {
   return (
-    <section id="about" className="py-20 md:py-28 bg-secondary/50">
+    <section id="team" className="py-20 md:py-28 bg-secondary/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           {/* Image */}
@@ -20,6 +20,7 @@ export function MeetDentist() {
                 src="/images/dr-carter.jpg"
                 alt="Dr. Amelia Carter, Founder and Lead Dentist at Carter Dental Studio"
                 fill
+                sizes="(max-width: 1024px) 100vw, 28rem"
                 className="object-cover"
               />
             </div>

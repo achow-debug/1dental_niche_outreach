@@ -77,8 +77,8 @@ export function HowItWorks({ onBookClick }: HowItWorksProps) {
         <div className="mt-20 text-center animate-fade-in-up animation-delay-500">
           <Button 
             onClick={onBookClick}
-            size="lg"
-            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-12 h-16 text-lg font-bold shadow-xl shadow-primary/20 hover:shadow-2xl hover:scale-105 transition-all"
+            variant="cta"
+            className="h-16 px-12 text-lg font-bold shadow-xl shadow-primary/20 hover:shadow-2xl hover:scale-105"
           >
             Book Appointment
           </Button>

@@ -37,6 +37,7 @@ export const viewport: Viewport = {
   themeColor: '#5a9a9a',
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
 }
 
 export default function RootLayout({
@@ -47,6 +48,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${manrope.variable} bg-background`}>
       <body className="font-sans antialiased relative">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:z-[100] focus:top-4 focus:left-4 focus:rounded-xl focus:bg-primary focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-primary-foreground focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          Skip to main content
+        </a>
         <div className="film-grain" aria-hidden="true" />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}

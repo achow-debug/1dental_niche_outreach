@@ -35,7 +35,7 @@ const reasons = [
 
 export function WhyChooseUs() {
   return (
-    <section id="about" className="section-padding bg-background relative overflow-hidden">
+    <section id="why-us" className="section-padding bg-background relative overflow-hidden">
       {/* Subtle background element */}
       <div className="absolute top-1/2 left-0 -translate-y-1/2 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-x-1/2" />
       

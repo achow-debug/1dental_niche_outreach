@@ -75,9 +75,9 @@ export function SmileQuiz({ onBookClick }: SmileQuizProps) {
             </span>
           </div>
 
-          <h3 className="text-3xl font-bold mb-8 text-foreground tracking-tight leading-[1.1]">
+          <h2 className="text-3xl font-bold mb-8 text-foreground tracking-tight leading-[1.1]">
             {steps[currentStep].question}
-          </h3>
+          </h2>
 
           <div className="grid gap-4">
             {steps[currentStep].options.map((option) => (
@@ -114,7 +114,7 @@ export function SmileQuiz({ onBookClick }: SmileQuizProps) {
           <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <Sparkles className="w-10 h-10 text-primary" />
           </div>
-          <h3 className="text-3xl font-bold mb-4">Here&apos;s a gentle next step</h3>
+          <h2 className="text-3xl font-bold mb-4">Here&apos;s a gentle next step</h2>
           <p className="text-muted-foreground mb-8 text-lg leading-relaxed">
             From what you&apos;ve shared, a relaxed consultation is the kindest place to start — especially with{" "}
             <strong className="text-foreground font-semibold">{answers[0]?.toLowerCase()}</strong> in mind and a goal of{" "}
@@ -124,7 +124,7 @@ export function SmileQuiz({ onBookClick }: SmileQuizProps) {
           <div className="bg-primary/5 rounded-2xl p-6 mb-8 text-left border border-primary/10">
             <div className="flex items-center gap-3 mb-4">
               <MessageSquare className="w-5 h-5 text-primary" />
-              <h4 className="font-bold text-sm uppercase tracking-wider text-primary">Your next step</h4>
+              <h3 className="font-bold text-sm uppercase tracking-wider text-primary">Your next step</h3>
             </div>
             <ul className="space-y-3">
               <li className="flex items-start gap-3 text-sm">
@@ -149,7 +149,8 @@ export function SmileQuiz({ onBookClick }: SmileQuizProps) {
             <Button
               type="button"
               onClick={onBookClick}
-              className="magnetic-btn flex-1 h-14 rounded-xl font-bold text-lg bg-primary hover:bg-primary/90"
+              variant="cta"
+              className="magnetic-btn h-14 flex-1 rounded-xl text-lg font-bold"
             >
               Book a visit <ArrowRight className="ml-2 w-5 h-5" />
             </Button>

@@ -33,14 +33,16 @@ export default function Home() {
   }
 
   const handleLearnMoreClick = () => {
-    const aboutSection = document.getElementById('about')
-    if (aboutSection) {
-      aboutSection.scrollIntoView({ behavior: 'smooth' })
-    }
+    const section = document.getElementById("why-us")
+    section?.scrollIntoView({ behavior: "smooth" })
   }
 
   return (
-    <main className="min-h-screen bg-background text-foreground selection:bg-primary/20">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="relative z-[1] min-h-screen bg-background text-foreground outline-none selection:bg-primary/20"
+    >
       <Header onBookClick={handleBookClick} />
       
       {/* 1. Hero Experience (Sensory) */}
