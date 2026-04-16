@@ -46,7 +46,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${manrope.variable} bg-background`}>
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased relative">
+        <div className="film-grain" aria-hidden="true" />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

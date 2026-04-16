@@ -28,21 +28,26 @@ export function Footer({ onBookClick }: FooterProps) {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-semibold text-sm">C</span>
+            <Link href="/" className="flex items-center gap-3 group mb-6">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center transition-transform group-hover:scale-105">
+                <span className="text-primary font-bold text-lg">C</span>
               </div>
-              <span className="font-semibold text-foreground text-lg tracking-tight">
-                Carter Dental Studio
-              </span>
+              <div className="flex flex-col">
+                <span className="font-bold text-foreground text-base tracking-tight leading-none">
+                  Carter Dental
+                </span>
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-0.5">
+                  Studio • Manchester
+                </span>
+              </div>
             </Link>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-6">
+            <p className="text-base text-muted-foreground leading-relaxed mb-8">
               Modern private dental care that feels calm, clear, and easy to book. 
-              Serving Manchester with gentle dentistry.
+              Serving Manchester with a patient-first approach.
             </p>
             <Button 
               onClick={onBookClick}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6 h-10 font-medium"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 h-12 font-bold shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
             >
               Book Appointment
             </Button>

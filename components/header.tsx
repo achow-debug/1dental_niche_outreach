@@ -30,33 +30,39 @@ export function Header({ onBookClick }: HeaderProps) {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-4 left-4 right-4 z-50 transition-all duration-500 rounded-2xl md:mx-auto md:max-w-5xl ${
         isScrolled
-          ? "bg-card/95 backdrop-blur-md shadow-sm border-b border-border"
-          : "bg-transparent"
+          ? "glass-surface py-2"
+          : "bg-transparent py-4"
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 md:h-20">
+      <div className="px-4 sm:px-6">
+        <div className="flex items-center justify-between h-14 md:h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-semibold text-sm">C</span>
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center transition-transform group-hover:scale-105">
+              <span className="text-primary font-bold text-lg">C</span>
             </div>
-            <span className="font-semibold text-foreground text-lg tracking-tight">
-              Carter Dental Studio
-            </span>
+            <div className="flex flex-col">
+              <span className="font-bold text-foreground text-base tracking-tight leading-none">
+                Carter Dental
+              </span>
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-0.5">
+                Studio • Manchester
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-10">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium"
+                className="text-muted-foreground hover:text-primary transition-all text-sm font-medium tracking-wide relative group"
               >
                 {link.label}
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary/40 transition-all group-hover:w-full" />
               </Link>
             ))}
           </nav>
@@ -65,7 +71,7 @@ export function Header({ onBookClick }: HeaderProps) {
           <div className="hidden md:block">
             <Button 
               onClick={onBookClick}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6 h-10 font-medium shadow-sm"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-7 h-11 font-semibold text-sm shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               Book Appointment
             </Button>
@@ -74,7 +80,7 @@ export function Header({ onBookClick }: HeaderProps) {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 text-foreground"
+            className="md:hidden p-2.5 rounded-xl bg-secondary/50 text-foreground transition-colors hover:bg-secondary"
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -84,14 +90,14 @@ export function Header({ onBookClick }: HeaderProps) {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-card border-t border-border">
-          <div className="px-4 py-6 space-y-4">
+        <div className="md:hidden mt-4 glass-surface rounded-2xl p-6 border-none shadow-2xl animate-fade-in-up">
+          <div className="space-y-4">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="block text-foreground hover:text-primary transition-colors text-base font-medium py-2"
+                className="block text-foreground hover:text-primary transition-colors text-lg font-medium py-3 border-b border-border/50"
               >
                 {link.label}
               </Link>
@@ -101,7 +107,7 @@ export function Header({ onBookClick }: HeaderProps) {
                 setIsMobileMenuOpen(false)
                 onBookClick()
               }}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-12 font-medium mt-4"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl h-14 font-semibold text-base mt-6 shadow-lg shadow-primary/20"
             >
               Book Appointment
             </Button>

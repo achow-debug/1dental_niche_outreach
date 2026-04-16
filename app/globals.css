@@ -4,40 +4,50 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Carter Dental Studio - Warm, Calm Healthcare Theme */
-  --background: oklch(0.985 0.002 90); /* Warm off-white */
-  --foreground: oklch(0.25 0.01 260); /* Dark charcoal with hint of blue */
-  --card: oklch(0.995 0.001 90); /* Pure white cards */
-  --card-foreground: oklch(0.25 0.01 260);
-  --popover: oklch(0.995 0.001 90);
-  --popover-foreground: oklch(0.25 0.01 260);
-  --primary: oklch(0.55 0.12 185); /* Muted teal - calm, healthcare */
-  --primary-foreground: oklch(0.995 0.001 90);
-  --secondary: oklch(0.965 0.005 90); /* Soft cream */
-  --secondary-foreground: oklch(0.35 0.01 260);
-  --muted: oklch(0.955 0.008 90);
-  --muted-foreground: oklch(0.48 0.01 260);
-  --accent: oklch(0.94 0.015 185); /* Very soft teal tint */
+  /* Carter Dental Studio - Warm, Premium healthcare Theme */
+  --background: oklch(0.99 0.002 90); /* Subtle warm white */
+  --foreground: oklch(0.2 0.01 260); /* Deep charcoal for readability */
+  
+  --card: oklch(1 0 0); /* Pure white cards */
+  --card-foreground: oklch(0.2 0.01 260);
+  
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.01 260);
+  
+  --primary: oklch(0.55 0.1 185); /* Premium teal/sage - calm */
+  --primary-foreground: oklch(1 0 0);
+  
+  --secondary: oklch(0.975 0.005 90); /* Soft cream/off-white */
+  --secondary-foreground: oklch(0.3 0.01 260);
+  
+  --muted: oklch(0.965 0.007 90);
+  --muted-foreground: oklch(0.45 0.01 260);
+  
+  --accent: oklch(0.94 0.02 185); /* Soft teal glow */
   --accent-foreground: oklch(0.45 0.08 185);
+  
   --destructive: oklch(0.55 0.2 25);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.925 0.005 90); /* Soft warm border */
-  --input: oklch(0.945 0.005 90);
-  --ring: oklch(0.55 0.12 185);
-  --chart-1: oklch(0.55 0.12 185);
-  --chart-2: oklch(0.6 0.1 185);
-  --chart-3: oklch(0.65 0.08 185);
-  --chart-4: oklch(0.7 0.06 185);
-  --chart-5: oklch(0.75 0.04 185);
-  --radius: 0.75rem;
-  --sidebar: oklch(0.985 0.002 90);
-  --sidebar-foreground: oklch(0.25 0.01 260);
-  --sidebar-primary: oklch(0.55 0.12 185);
-  --sidebar-primary-foreground: oklch(0.995 0.001 90);
-  --sidebar-accent: oklch(0.94 0.015 185);
+  
+  --border: oklch(0.93 0.005 90); /* Very soft border */
+  --surface-border: oklch(0.9 0.005 90 / 0.5); /* Ultra-soft border for sections */
+  
+  --input: oklch(0.95 0.005 90);
+  --ring: oklch(0.55 0.1 185);
+  
+  /* Additional UI Polish Tokens */
+  --radius: 1.5rem; /* Larger, more modern radius */
+  --hero-glow: radial-gradient(circle at 50% 50%, oklch(0.95 0.03 185 / 0.15) 0%, transparent 70%);
+  --cta-glow: radial-gradient(circle at 50% 50%, oklch(0.55 0.1 185 / 0.05) 0%, transparent 100%);
+  
+  --sidebar: oklch(0.99 0.002 90);
+  --sidebar-foreground: oklch(0.2 0.01 260);
+  --sidebar-primary: oklch(0.55 0.1 185);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.94 0.02 185);
   --sidebar-accent-foreground: oklch(0.45 0.08 185);
-  --sidebar-border: oklch(0.925 0.005 90);
-  --sidebar-ring: oklch(0.55 0.12 185);
+  --sidebar-border: oklch(0.93 0.005 90);
+  --sidebar-ring: oklch(0.55 0.1 185);
 }
 
 .dark {
@@ -125,7 +135,33 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "ss02", "cv01", "cv11";
+  }
+  h1, h2, h3, h4 {
+    @apply font-semibold tracking-tight text-balance;
+  }
+}
+
+@layer utilities {
+  .text-editorial {
+    @apply text-balance leading-[1.15] tracking-tight md:tracking-tighter;
+  }
+  
+  .glass-surface {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-sm;
+  }
+  
+  .section-padding {
+    @apply py-20 md:py-32;
+  }
+  
+  .hero-glow-bg {
+    background: var(--hero-glow);
+  }
+  
+  .cta-glow-bg {
+    background: var(--cta-glow);
   }
 }
 
@@ -168,25 +204,33 @@
   animation: blob-reverse 22s ease-in-out infinite;
 }
 
-/* Scroll-based fade-in animation */
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Film Grain Overlay */
+.film-grain {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.12;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
 }
 
-.animate-fade-in-up {
-  animation: fade-in-up 0.6s ease-out forwards;
+/* Section transitions */
+.reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(30px) scale(0.98);
+  transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Stagger animation delays */
-.animation-delay-100 { animation-delay: 100ms; }
-.animation-delay-200 { animation-delay: 200ms; }
-.animation-delay-300 { animation-delay: 300ms; }
-.animation-delay-400 { animation-delay: 400ms; }
-.animation-delay-500 { animation-delay: 500ms; }
+.reveal-on-scroll.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Magnetic effect helper */
+.magnetic-btn {
+  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
