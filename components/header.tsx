@@ -73,7 +73,7 @@ export function Header({ onBookClick }: HeaderProps) {
               onClick={onBookClick}
               className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-7 h-11 font-semibold text-sm shadow-md hover:shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              Book Appointment
+              Book a visit
             </Button>
           </div>
 
@@ -109,7 +109,7 @@ export function Header({ onBookClick }: HeaderProps) {
               }}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl h-14 font-semibold text-base mt-6 shadow-lg shadow-primary/20"
             >
-              Book Appointment
+              Book a visit
             </Button>
           </div>
         </div>

@@ -14,6 +14,7 @@ import { Calendar, Clock, User, Mail, Phone, CheckCircle2, ArrowLeft, Sparkles }
 interface BookingModalProps {
   isOpen: boolean
   onClose: () => void
+  onSuccess?: () => void
 }
 
 const treatments = [
@@ -40,7 +41,7 @@ const dates = [
 
 type BookingStep = "treatment" | "datetime" | "details" | "confirmation"
 
-export function BookingModal({ isOpen, onClose }: BookingModalProps) {
+export function BookingModal({ isOpen, onClose, onSuccess }: BookingModalProps) {
   const [step, setStep] = useState<BookingStep>("treatment")
   const [selectedTreatment, setSelectedTreatment] = useState("")
   const [selectedDate, setSelectedDate] = useState("")
@@ -60,6 +61,11 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
     onClose()
   }
 
+  const handleComplete = () => {
+    onSuccess?.()
+    handleClose()
+  }
+
   const goBack = () => {
     if (step === "datetime") setStep("treatment")
     else if (step === "details") setStep("datetime")
@@ -67,8 +73,8 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
 
   const renderTreatmentStep = () => (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Select the type of appointment you&apos;d like to book.
+      <p className="text-sm text-muted-foreground leading-relaxed">
+        Tell us what you&apos;re hoping to visit us for — we&apos;ll take it from there.
       </p>
       <div className="grid gap-3">
         {treatments.map((treatment) => (
@@ -98,7 +104,7 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to treatments
+        Back to visit type
       </button>
 
       <div>
@@ -178,16 +184,19 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
 
       {/* Form */}
       <div className="space-y-4">
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Just a few details to get us started — we&apos;ll only use them to confirm your visit.
+        </p>
         <div>
           <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
             <User className="w-4 h-4 text-primary" />
-            Full name
+            Your name
           </label>
           <input
             type="text"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="Enter your full name"
+            placeholder="How should we greet you?"
             className="w-full mt-1.5 px-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
           />
         </div>
@@ -195,13 +204,13 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
         <div>
           <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
             <Mail className="w-4 h-4 text-primary" />
-            Email address
+            Email
           </label>
           <input
             type="email"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            placeholder="Enter your email"
+            placeholder="For your confirmation"
             className="w-full mt-1.5 px-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
           />
         </div>
@@ -209,13 +218,13 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
         <div>
           <label className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
             <Phone className="w-4 h-4 text-primary" />
-            Phone number
+            Phone
           </label>
           <input
             type="tel"
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            placeholder="Enter your phone number"
+            placeholder="So we can reach you if plans shift"
             className="w-full mt-1.5 px-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
           />
         </div>
@@ -226,11 +235,11 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
         disabled={!formData.name || !formData.email || !formData.phone}
         className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-12 font-medium disabled:opacity-50"
       >
-        Confirm Booking
+        Send my booking request
       </Button>
 
-      <p className="text-xs text-center text-muted-foreground">
-        By booking, you agree to our terms of service and privacy policy.
+      <p className="text-xs text-center text-muted-foreground leading-relaxed">
+        By continuing, you&apos;re happy for us to follow up under our privacy policy and terms.
       </p>
     </div>
   )
@@ -242,11 +251,10 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
       </div>
       
       <h3 className="text-2xl font-semibold text-foreground mb-2">
-        Booking request received
+        We&apos;ve got your request
       </h3>
-      <p className="text-muted-foreground mb-6">
-        Thank you for booking with Carter Dental Studio. 
-        We&apos;ll confirm your appointment shortly.
+      <p className="text-muted-foreground mb-6 leading-relaxed">
+        Thank you — we&apos;ll be in touch shortly to confirm a time that works for you.
       </p>
 
       <div className="bg-accent rounded-xl p-5 mb-6 text-left">
@@ -283,7 +291,7 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
       </div>
 
       <Button
-        onClick={handleClose}
+        onClick={handleComplete}
         className="w-full mt-8 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full h-12 font-medium"
       >
         Done
@@ -293,15 +301,20 @@ export function BookingModal({ isOpen, onClose }: BookingModalProps) {
 
   const getTitle = () => {
     switch (step) {
-      case "treatment": return "Book your appointment"
-      case "datetime": return "Choose date & time"
-      case "details": return "Your details"
+      case "treatment": return "Book a visit"
+      case "datetime": return "Pick a time that suits you"
+      case "details": return "Almost there"
       case "confirmation": return ""
     }
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) handleClose()
+      }}
+    >
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         {step !== "confirmation" && (
           <DialogHeader>

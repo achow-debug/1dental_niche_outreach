@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { BackgroundVideo } from "@/components/background-video"
@@ -60,7 +61,7 @@ export function Hero({ onBookClick, onLearnMoreClick }: HeroProps) {
                 size="lg"
                 className="magnetic-btn bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-10 h-16 text-lg font-bold shadow-xl shadow-primary/20 hover:shadow-2xl hover:scale-105 transition-all"
               >
-                Book Appointment
+                Book a visit
               </Button>
               <button 
                 onClick={onLearnMoreClick}

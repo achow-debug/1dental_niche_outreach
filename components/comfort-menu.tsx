@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Headphones, Coffee, Wind, Utensils, Music, ConciergeBell } from "lucide-react"
 
 const amenities = [
@@ -64,11 +65,40 @@ export function ComfortMenu() {
           </div>
         </div>
 
+        <div className="grid lg:grid-cols-2 gap-10 items-stretch mb-16">
+          <div className="relative min-h-[280px] lg:min-h-[360px] rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/20 interactive-card-lift">
+            <Image
+              src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=1600"
+              alt="Calm reception lounge with soft seating and natural light"
+              fill
+              className="object-cover"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              unoptimized
+            />
+            <div className="absolute inset-0 bg-gradient-to-tr from-background/80 via-transparent to-transparent" />
+            <div className="absolute bottom-8 left-8 right-8">
+              <p className="text-sm font-semibold text-foreground max-w-sm">
+                A quiet arrival — concierge-style reception, soft lighting, and space to exhale before you sit down.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col justify-center rounded-[2.5rem] border border-border/60 bg-card/80 p-10 lg:p-12 shadow-sm">
+            <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-primary mb-4">Lifestyle</p>
+            <h3 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight mb-4">
+              Hospitality-led comfort, clinically grounded care
+            </h3>
+            <p className="text-muted-foreground leading-relaxed">
+              We treat amenities as part of the appointment — not an afterthought. It&apos;s how we help nervous patients
+              feel steady, and how we make great dentistry feel surprisingly human.
+            </p>
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {amenities.map((item, idx) => (idx < 6 && (
             <div 
               key={item.title} 
-              className="p-8 glass-surface rounded-[2rem] hover:scale-[1.03] transition-all duration-500 group border-none shadow-sm hover:shadow-xl"
+              className="p-8 glass-surface rounded-[2rem] transition-all duration-500 group border-none shadow-sm hover:shadow-xl interactive-card-lift"
             >
               <div className="w-14 h-14 bg-primary/5 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-primary group-hover:text-white transition-colors">
                 <item.icon className="w-7 h-7" />

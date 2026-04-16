@@ -49,7 +49,7 @@ export function Footer({ onBookClick }: FooterProps) {
               onClick={onBookClick}
               className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 h-12 font-bold shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
             >
-              Book Appointment
+              Book a visit
             </Button>
           </div>
 

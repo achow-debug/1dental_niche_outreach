@@ -53,7 +53,7 @@ export default function Home() {
       
       {/* 3. Interactive Conversion (Smile Quiz) */}
       <ScrollReveal className="section-padding">
-        <SmileQuiz />
+        <SmileQuiz onBookClick={handleBookClick} />
       </ScrollReveal>
       
       {/* 4. Brand Foundation */}
@@ -72,7 +72,7 @@ export default function Home() {
       </ScrollReveal>
 
       <ScrollReveal>
-        <SuitabilityChecker />
+        <SuitabilityChecker onBookClick={handleBookClick} />
       </ScrollReveal>
       
       <ScrollReveal>

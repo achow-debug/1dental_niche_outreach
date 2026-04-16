@@ -1,6 +1,7 @@
 "use client"
 
 import { Star, Quote } from "lucide-react"
+import { VideoTestimonialGrid } from "@/components/video-testimonial-grid"
 
 const testimonials = [
   {
@@ -86,17 +87,19 @@ export function SocialProof() {
           <h2 className="text-3xl md:text-4xl font-semibold text-foreground tracking-tight text-balance">
             Real patient experiences
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Hear from patients who have experienced our calm, professional approach to dental care.
+          <p className="mt-4 text-lg text-muted-foreground leading-relaxed">
+            Hear from people who&apos;ve experienced our calm, professional approach — in writing and on camera.
           </p>
         </div>
+
+        <VideoTestimonialGrid />
 
         {/* Testimonials Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
           {testimonials.map((testimonial, index) => (
             <div
               key={index}
-              className="bg-card rounded-2xl p-6 border border-border hover:shadow-md transition-all"
+              className="bg-card rounded-2xl p-6 border border-border hover:shadow-md transition-all interactive-card-lift"
             >
               <div className="flex items-center gap-1 mb-4">
                 {[...Array(5)].map((_, i) => (

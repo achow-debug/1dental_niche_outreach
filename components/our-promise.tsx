@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { Sparkles, Signature } from "lucide-react"
+import { Sparkles } from "lucide-react"
 
 export function OurPromise() {
   return (
@@ -44,13 +44,26 @@ export function OurPromise() {
               <span className="text-primary">Clinical excellence, <br className="hidden md:block" /> without the clinical feel.</span>
             </h2>
             
-            <div className="space-y-6 text-lg text-muted-foreground leading-relaxed italic border-l-2 border-primary/20 pl-8 mb-12">
-              <p>
-                "I founded Carter Dental Studio because I believe that seeking healthcare should never be a source of stress. Too many people avoid the dentist because of past experiences that felt cold, rushed, or intimidating."
-              </p>
-              <p>
-                "My promise is simple: we will listen more than we talk. We will never judge the state of your smile. And we will provide the most gentle, state-of-the-art care in an environment that feels more like a lounge than a clinic."
-              </p>
+            <div
+              className="handwritten-note rounded-[2rem] p-8 md:p-10 mb-12 border border-primary/10 shadow-sm"
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(0.99 0.01 90 / 0.95) 0%, oklch(0.98 0.02 90 / 0.98) 100%)",
+              }}
+            >
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase text-primary mb-4">A note from Amelia</p>
+              <div className="space-y-6 text-lg text-muted-foreground leading-relaxed font-serif italic">
+                <p>
+                  &ldquo;I founded Carter Dental Studio because I believe seeking care should never feel like something to
+                  endure. Too many people avoid the dentist because the last experience felt cold, rushed, or
+                  intimidating.&rdquo;
+                </p>
+                <p>
+                  &ldquo;My promise is simple: we listen more than we talk. We never judge where your smile is starting
+                  from. And we deliver gentle, modern dentistry in a space that feels more like a lounge than a
+                  clinic.&rdquo;
+                </p>
+              </div>
             </div>
 
             <div className="flex flex-col gap-4">
