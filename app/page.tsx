@@ -23,6 +23,8 @@ import { MobilestickyCTA } from "@/components/mobile-sticky-cta"
 
 import { ScrollReveal } from "@/components/scroll-reveal"
 
+import { SuitabilityChecker } from "@/components/suitability-checker"
+
 export default function Home() {
   const [isBookingOpen, setIsBookingOpen] = useState(false)
 
@@ -67,6 +69,10 @@ export default function Home() {
       {/* 6. Clinical Excellence */}
       <ScrollReveal>
         <Treatments onBookClick={handleBookClick} />
+      </ScrollReveal>
+
+      <ScrollReveal>
+        <SuitabilityChecker />
       </ScrollReveal>
       
       <ScrollReveal>
