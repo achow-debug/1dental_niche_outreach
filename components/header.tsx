@@ -69,7 +69,13 @@ export function Header({ onBookClick }: HeaderProps) {
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center gap-10">
+            <Link
+              href="/login"
+              className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+            >
+              Log in
+            </Link>
             <Button 
               onClick={onBookClick}
               variant="cta"
@@ -104,13 +110,20 @@ export function Header({ onBookClick }: HeaderProps) {
                 {link.label}
               </Link>
             ))}
+            <Link
+              href="/login"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block text-center text-sm font-medium text-muted-foreground hover:text-primary py-2"
+            >
+              Log in
+            </Link>
             <Button 
               onClick={() => {
                 setIsMobileMenuOpen(false)
                 onBookClick()
               }}
               variant="cta"
-              className="mt-6 h-14 w-full rounded-2xl text-base shadow-lg shadow-primary/20"
+              className="mt-4 h-14 w-full rounded-2xl text-base shadow-lg shadow-primary/20"
             >
               Book a visit
             </Button>
