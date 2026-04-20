@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { HeaderAuthSection } from "@/components/header-auth-section"
 import { Menu, X } from "lucide-react"
 
 const navLinks = [
@@ -69,7 +70,8 @@ export function Header({ onBookClick }: HeaderProps) {
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center gap-10">
+            <HeaderAuthSection variant="desktop" />
             <Button 
               onClick={onBookClick}
               variant="cta"
@@ -104,13 +106,14 @@ export function Header({ onBookClick }: HeaderProps) {
                 {link.label}
               </Link>
             ))}
+            <HeaderAuthSection variant="mobile" onNavigate={() => setIsMobileMenuOpen(false)} />
             <Button 
               onClick={() => {
                 setIsMobileMenuOpen(false)
                 onBookClick()
               }}
               variant="cta"
-              className="mt-6 h-14 w-full rounded-2xl text-base shadow-lg shadow-primary/20"
+              className="mt-4 h-14 w-full rounded-2xl text-base shadow-lg shadow-primary/20"
             >
               Book a visit
             </Button>

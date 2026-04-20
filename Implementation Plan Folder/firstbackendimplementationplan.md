@@ -1,56 +1,41 @@
 ---
 name: First backend implementation plan (merged)
-overview: "Merged from two sources: (1) Dental backend dashboards — Supabase-backed Next.js 16 App Router expansion: Session Types plus Sessions (calendar instances), RBAC with strict RLS, soft-deleted bookings/sessions, admin/client dashboards on slug-based pages, toast UX (top-left), IMPLEMENTATION_PLAN.md + DESIGN_TOKENS.md. (2) Backend Dashboards Implementation — phased Supabase (Postgres, Auth, Storage, Edge Functions), session_categories + session_types + practice_settings, max advance booking window, availability_rules/exceptions, role lifecycle, detailed phases 0–8, QA/runbooks."
+overview: "Merged from two sources (full detail preserved below). Execution order is revised: (1) Supabase setup and all tables/migrations + RLS including profiles/roles; (2) signup + login (and auth wiring); (3) manual admin user in Supabase console once schema exists; (4) mock admin + user dashboards to validate signup, login, and role-based access—then continue with catalog, booking, full dashboards, availability, history, QA per original phases."
 todos:
-  # From dental_backend_dashboards_ef60fe76.plan.md
+  # Revised first slice (do these before the rest of the backlog)
+  - id: supabase-all-tables
+    content: "Supabase project, env, migrations: full schema (profiles + role enum, session_categories, session_types, practice_settings, sessions, bookings, history/audit tables as planned); soft deletes; triggers (e.g. profile on signup); RLS + is_admin/is_staff helpers"
+    status: pending
+  - id: signup-login-roles
+    content: "@supabase/ssr + middleware; /signup, /login (and /auth/callback as needed); enforce routes by profiles.role; default new users to user role—no self-service admin"
+    status: pending
+  - id: manual-admin-bootstrap
+    content: "After tables exist, create/promote first admin in Supabase (Auth + profiles.role = admin)—documented step, not app code"
+    status: pending
+  - id: mock-dashboards-smoke
+    content: "Mock /admin and /client (or /user) dashboard shells—enough UI to verify signup, login, role gates, and redirect behavior"
+    status: pending
+  # Remaining work (original merged backlog; order after mock validation)
   - id: doc-implementation-plan-md
-    content: Author detailed IMPLEMENTATION_PLAN.md (phases, migrations order, route map, testing) from this consolidated plan
-    status: pending
-  - id: supabase-schema-rls
-    content: "Design migrations: session_types, sessions, bookings, profiles, audit tables, soft deletes, triggers, RLS + is_admin helpers"
-    status: pending
-  - id: next-supabase-auth
-    content: Wire @supabase/ssr, middleware for /admin and /client, auth pages and profile
+    content: Author detailed IMPLEMENTATION_PLAN.md (phases, migrations order, route map, testing) from this consolidated plan when execution starts
     status: pending
   - id: dashboard-ui-tokens
     content: Add DESIGN_TOKENS.md, dashboard shell (sidebar), standardize toast viewport top-left
     status: pending
-  - id: admin-features
-    content: Admin CRUD for session types/sessions, calendar, bookings, clients, reporting v1, settings, user management
-    status: pending
-  - id: client-features
-    content: Client dashboard + booking management; public /book wired to real slots
-    status: pending
-  - id: audit-logging
-    content: Login/session/booking history writes + admin action log for bans/roles
-    status: pending
-  # From backend_dashboards_implementation_fff00d9a.plan.md
-  - id: supabase-foundation
-    content: Supabase project, env vars, @supabase/ssr, middleware session pattern
-    status: pending
-  - id: schema-rls-soft-delete
-    content: "Migrations: session_categories, session_types, practice_settings, sessions, bookings, profiles, history tables; deleted_at on bookings/sessions; RLS + is_admin helpers"
-    status: pending
-  - id: auth-profile
-    content: Login/signup/profile pages + profiles trigger; role user→client on first booking
-    status: pending
   - id: admin-crud-sessions
-    content: Admin categories + session types (CRUD table data, optional seed templates) + session instances; cancellation vs soft-delete semantics
+    content: Admin categories + session types + session instances; cancellation vs soft-delete semantics
     status: pending
   - id: client-booking
-    content: Wire /book to live data; client booking list/detail pages
+    content: Wire /book to live data; client booking list/detail pages; role user→client on first booking
     status: pending
-  - id: admin-dashboards
-    content: "Admin routes: dashboard, bookings, clients, reporting, settings (incl. max advance booking window), user management"
+  - id: admin-dashboards-full
+    content: "Full admin routes: bookings, clients, reporting, settings (max advance), user management"
     status: pending
   - id: availability-v2
     content: availability_rules/exceptions UI + optional slot generator Edge Function
     status: pending
   - id: history-audit-media
     content: History triggers, login history pipeline, optional Storage avatars
-    status: pending
-  - id: design-tokens-doc
-    content: Author DESIGN_TOKENS.md + align toast top-left + dashboard Card/Table patterns
     status: pending
   - id: qa-rls
     content: RLS checks, E2E smoke, document soft-delete restore procedures
@@ -68,6 +53,19 @@ This file merges **two** Cursor plans into one readable document. **Nothing was 
 **Stack context (both plans):** Next.js 16 (App Router), React 19, Tailwind 4, shadcn/ui (`components/ui/`), Manrope via `app/layout.tsx`, Carter Dental Studio branding.
 
 **Out of scope (both):** Online payments; note “pay in person” on booking confirmation copy. Stripe deferred; optional future hook points (e.g. `payment_status = in_person`).
+
+---
+
+## Revised execution order (current)
+
+This section supersedes the *initial sequencing* of the phased sections below for the **next implementation pass**. The full data model, RLS, and route map elsewhere in this document still apply; only **when** things are built changes.
+
+1. **Supabase first** — Project, Auth settings, env vars, SQL migrations for **all** planned tables (including `profiles` with `role` and related enums), indexes, soft-delete columns, profile sync trigger(s), and **RLS** with `is_admin()` / `is_staff()` (or equivalent) so the database is complete before UI work depends on it.
+2. **Signup and login** — Next.js: `@supabase/ssr`, `middleware.ts` session refresh, `/signup` and `/login` (plus `/auth/callback` and logout as needed). New signups get default role **`user`** (or as normalized in migrations); elevated roles are never self-assigned in the app.
+3. **Roles and manual admin** — Role logic lives in `profiles` + RLS + middleware route protection. **Do not** build in-app admin promotion for the first slice. After migrations are applied, **create the first admin manually** in Supabase (e.g. ensure the user exists in Auth, then set `profiles.role = 'admin'` for that user).
+4. **Mock dashboards** — Lightweight **admin** and **user/client** dashboard pages (placeholders are fine: layout shell, “you are logged in as …”, role badge, links to sign out). Use these to manually test: register → login → access user routes; login as manually promoted admin → access admin routes; confirm non-admin cannot reach `/admin/**`.
+
+After this slice is verified, continue with catalog CRUD, `/book`, full dashboards, availability, history, and QA per **Phased implementation** below.
 
 ---
 
@@ -273,6 +271,8 @@ Create **`DESIGN_TOKENS.md`** (repo root or `/docs`) locking:
 
 ### Summary steps (from first plan — for IMPLEMENTATION_PLAN.md detail)
 
+**Note:** The **Revised execution order** section above is the active sequence for the first milestone: full Supabase schema → auth pages → manual admin → mock dashboards → then the steps below.
+
 1. Supabase project: Auth, Storage, URL redirects.
 2. Migrations: tables, enums, triggers (profile on signup, role on first booking), soft-delete, audit.
 3. RLS: all user-facing tables; policies + tests.
@@ -285,8 +285,8 @@ Create **`DESIGN_TOKENS.md`** (repo root or `/docs`) locking:
 ### Detailed phases (from second plan — step-by-step)
 
 - **Phase 0 — Project setup:** Supabase project; env vars (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` server-only); `@supabase/supabase-js` + `@supabase/ssr`; `middleware.ts` session refresh.
-- **Phase 1 — Schema + RLS + soft delete:** Migrations including `session_categories`, `session_types`, `practice_settings`, `deleted_at` on bookings/sessions; indexes; RLS + helpers; optional seed session types as **rows**; admin profile after manual promotion.
-- **Phase 2 — Auth & profile:** `/login`, `/signup`, `/profile`; profiles sync trigger on `auth.users` insert.
+- **Phase 1 — Schema + RLS + soft delete:** Migrations including `session_categories`, `session_types`, `practice_settings`, `deleted_at` on bookings/sessions; indexes; RLS + helpers; optional seed session types as **rows**. **First admin** is created only **after** this phase, **manually** in Supabase (not via app signup).
+- **Phase 2 — Auth & profile:** `/login`, `/signup`, `/profile`; profiles sync trigger on `auth.users` insert. **Early milestone:** ship signup/login **before** full catalog work; add **mock** admin and user dashboard pages to validate roles (see **Revised execution order**).
 - **Phase 3 — Catalog & sessions (admin):** CRUD categories → session types → session instances; validation; cancellation vs soft-delete semantics.
 - **Phase 4 — Booking (client):** Replace demo on `app/book/page.tsx`; enforce `max_advance_booking_days`; role promotion `user` → `client`; client booking pages.
 - **Phase 5 — Admin dashboards:** Overview, bookings, sessions, clients, reporting, settings (incl. max advance), users.
