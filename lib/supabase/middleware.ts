@@ -75,6 +75,15 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  if (path.startsWith('/profile')) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.searchParams.set('redirect', path)
+      return redirectWithSession(url)
+    }
+  }
+
   if (path.startsWith('/dashboard')) {
     if (!user) {
       const url = request.nextUrl.clone()
