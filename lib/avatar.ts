@@ -1,9 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-const AVATAR_BUCKET = 'avatars'
+const AVATAR_BUCKET = 'avatar'
 const SIGNED_URL_TTL = 3600
 
-/** Path inside the `avatars` bucket, e.g. `{userId}/avatar.jpg` */
+/** Path inside the `avatar` bucket, e.g. `{userId}/avatar.jpg` */
 export function avatarObjectPath(userId: string, extension: string) {
   const ext = extension.replace(/^\./, '').toLowerCase()
   return `${userId}/avatar.${ext}`

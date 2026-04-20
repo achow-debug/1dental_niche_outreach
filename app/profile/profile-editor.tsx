@@ -1,15 +1,12 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
-import {
-  AVATAR_BUCKET,
-  avatarObjectPath,
-  extensionFromMime,
-  getAvatarSignedUrl,
-} from '@/lib/avatar'
+import { AVATAR_BUCKET, avatarObjectPath, getAvatarSignedUrl } from '@/lib/avatar'
+import { getProfileInitialLetter } from '@/lib/profile-initial'
 import type { Profile } from '@/lib/types/profile'
+import { AvatarCropDialog } from '@/components/avatar-crop-dialog'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,7 +14,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 
-const PLACEHOLDER_SRC = '/placeholder.svg'
 const MAX_BYTES = 5 * 1024 * 1024
 
 type Props = {
@@ -35,10 +31,26 @@ export function ProfileEditor({ user, profile, initialAvatarSignedUrl }: Props) 
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const [cropOpen, setCropOpen] = useState(false)
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null)
 
-  const initial = user.email?.charAt(0)?.toUpperCase() ?? '?'
+  const initial = getProfileInitialLetter(fullName, user.email)
 
-  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+  useEffect(() => {
+    return () => {
+      if (cropImageSrc) URL.revokeObjectURL(cropImageSrc)
+    }
+  }, [cropImageSrc])
+
+  function handleCropDialogChange(open: boolean) {
+    if (!open && cropImageSrc) {
+      URL.revokeObjectURL(cropImageSrc)
+      setCropImageSrc(null)
+    }
+    setCropOpen(open)
+  }
+
+  function handlePickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
@@ -46,16 +58,22 @@ export function ProfileEditor({ user, profile, initialAvatarSignedUrl }: Props) 
       setMessage({ type: 'err', text: 'Image must be 5MB or smaller.' })
       return
     }
-    const ext = extensionFromMime(file.type)
-    if (!ext) {
-      setMessage({ type: 'err', text: 'Use JPEG, PNG, WebP, or GIF.' })
+    if (!file.type.startsWith('image/')) {
+      setMessage({ type: 'err', text: 'Choose an image file (JPEG, PNG, WebP, or GIF).' })
       return
     }
+    if (cropImageSrc) URL.revokeObjectURL(cropImageSrc)
+    const url = URL.createObjectURL(file)
+    setCropImageSrc(url)
+    setCropOpen(true)
+    setMessage(null)
+  }
 
+  async function handleCroppedUpload(blob: Blob) {
     setUploading(true)
     setMessage(null)
     const supabase = createClient()
-    const path = avatarObjectPath(user.id, ext)
+    const path = avatarObjectPath(user.id, 'jpg')
 
     if (avatarPath && avatarPath !== path) {
       await supabase.storage.from(AVATAR_BUCKET).remove([avatarPath])
@@ -63,7 +81,7 @@ export function ProfileEditor({ user, profile, initialAvatarSignedUrl }: Props) 
 
     const { error: upErr } = await supabase.storage
       .from(AVATAR_BUCKET)
-      .upload(path, file, { upsert: true, contentType: file.type })
+      .upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
 
     if (upErr) {
       setUploading(false)
@@ -112,11 +130,20 @@ export function ProfileEditor({ user, profile, initialAvatarSignedUrl }: Props) 
 
   return (
     <div className="space-y-8">
+      <AvatarCropDialog
+        open={cropOpen}
+        onOpenChange={handleCropDialogChange}
+        imageSrc={cropImageSrc}
+        onCropped={async (blob) => {
+          await handleCroppedUpload(blob)
+        }}
+      />
+
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">Your profile</h1>
         <p className="mt-2 text-muted-foreground">
-          Update your details and profile picture. Your photo is stored privately; only you (and practice admins) can
-          access it.
+          Update your details and profile picture. Drag and zoom to fit your photo in the circle; it is stored privately
+          (you and practice admins can access it).
         </p>
       </div>
 
@@ -134,11 +161,11 @@ export function ProfileEditor({ user, profile, initialAvatarSignedUrl }: Props) 
       <Card>
         <CardHeader>
           <CardTitle>Profile picture</CardTitle>
-          <CardDescription>JPEG, PNG, WebP, or GIF — up to 5MB.</CardDescription>
+          <CardDescription>Choose a photo, then adjust crop and zoom. JPEG, PNG, WebP, or GIF — up to 5MB.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6 sm:flex-row sm:items-center">
           <Avatar className="h-24 w-24">
-            <AvatarImage src={avatarPreview ?? PLACEHOLDER_SRC} alt="" />
+            {avatarPreview ? <AvatarImage src={avatarPreview} alt="" /> : null}
             <AvatarFallback className="text-2xl font-semibold bg-primary/15 text-primary">{initial}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col gap-2">
@@ -147,7 +174,7 @@ export function ProfileEditor({ user, profile, initialAvatarSignedUrl }: Props) 
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
               className="sr-only"
-              onChange={handleAvatarChange}
+              onChange={handlePickFile}
             />
             <Button
               type="button"
@@ -155,7 +182,7 @@ export function ProfileEditor({ user, profile, initialAvatarSignedUrl }: Props) 
               disabled={uploading}
               onClick={() => fileRef.current?.click()}
             >
-              {uploading ? 'Uploading…' : 'Change photo'}
+              {uploading ? 'Saving…' : 'Change photo'}
             </Button>
           </div>
         </CardContent>

@@ -3,9 +3,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { User } from 'lucide-react'
+import { LayoutDashboard, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { getDashboardHref } from '@/lib/dashboard-href'
 import { getAvatarSignedUrl } from '@/lib/avatar'
+import { getProfileInitialLetter } from '@/lib/profile-initial'
+import type { ProfileRole } from '@/lib/types/profile'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,8 +19,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-const PLACEHOLDER_SRC = '/placeholder.svg'
-
 type Props = {
   variant: 'desktop' | 'mobile'
   onNavigate?: () => void
@@ -27,6 +28,8 @@ export function HeaderAuthSection({ variant, onNavigate }: Props) {
   const router = useRouter()
   const [userId, setUserId] = useState<string | null>(null)
   const [email, setEmail] = useState<string | null>(null)
+  const [fullName, setFullName] = useState<string | null>(null)
+  const [role, setRole] = useState<ProfileRole | null>(null)
   const [signedUrl, setSignedUrl] = useState<string | null>(null)
   const [signingOut, setSigningOut] = useState(false)
 
@@ -38,12 +41,20 @@ export function HeaderAuthSection({ variant, onNavigate }: Props) {
     if (!user) {
       setUserId(null)
       setEmail(null)
+      setFullName(null)
+      setRole(null)
       setSignedUrl(null)
       return
     }
     setUserId(user.id)
     setEmail(user.email ?? null)
-    const { data: profile } = await supabase.from('profiles').select('avatar_url').eq('id', user.id).maybeSingle()
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('avatar_url, full_name, role')
+      .eq('id', user.id)
+      .maybeSingle()
+    setFullName(profile?.full_name ?? null)
+    setRole((profile?.role as ProfileRole) ?? null)
     const path = profile?.avatar_url?.trim() || null
     const url = await getAvatarSignedUrl(supabase, path)
     setSignedUrl(url)
@@ -70,7 +81,8 @@ export function HeaderAuthSection({ variant, onNavigate }: Props) {
     router.refresh()
   }
 
-  const initial = email?.charAt(0)?.toUpperCase() ?? '?'
+  const initial = getProfileInitialLetter(fullName, email)
+  const dashboardHref = getDashboardHref(role)
 
   if (!userId) {
     if (variant === 'desktop') {
@@ -99,11 +111,21 @@ export function HeaderAuthSection({ variant, onNavigate }: Props) {
       <div className="space-y-3 pt-2 border-t border-border/50 mt-2">
         <div className="flex items-center gap-3 py-2">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={signedUrl ?? PLACEHOLDER_SRC} alt="" />
+            {signedUrl ? <AvatarImage src={signedUrl} alt="" /> : null}
             <AvatarFallback className="bg-primary/15 text-primary text-sm font-semibold">{initial}</AvatarFallback>
           </Avatar>
           <span className="text-sm font-medium text-foreground truncate">{email}</span>
         </div>
+        {dashboardHref ? (
+          <Link
+            href={dashboardHref}
+            onClick={onNavigate}
+            className="flex items-center gap-2 text-foreground hover:text-primary transition-colors text-lg font-medium py-2"
+          >
+            <LayoutDashboard className="size-5" />
+            Dashboard
+          </Link>
+        ) : null}
         <Link
           href="/profile"
           onClick={onNavigate}
@@ -135,12 +157,20 @@ export function HeaderAuthSection({ variant, onNavigate }: Props) {
           aria-label="Account menu"
         >
           <Avatar className="h-10 w-10">
-            <AvatarImage src={signedUrl ?? PLACEHOLDER_SRC} alt="" />
+            {signedUrl ? <AvatarImage src={signedUrl} alt="" /> : null}
             <AvatarFallback className="bg-primary/15 text-primary text-sm font-semibold">{initial}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
+        {dashboardHref ? (
+          <DropdownMenuItem asChild>
+            <Link href={dashboardHref} className="cursor-pointer">
+              <LayoutDashboard className="mr-2 size-4" />
+              Dashboard
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem asChild>
           <Link href="/profile" className="cursor-pointer">
             <User className="mr-2 size-4" />
