@@ -24,8 +24,16 @@ type Props = {
 
 export function ProfileEditor({ user, profile, initialAvatarSignedUrl }: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
-  const [fullName, setFullName] = useState(profile.full_name)
-  const [phone, setPhone] = useState(profile.phone ?? '')
+  const [firstName, setFirstName] = useState(profile.first_name ?? '')
+  const [lastName, setLastName] = useState(profile.last_name ?? '')
+  const [phonePrefix, setPhonePrefix] = useState(profile.phone_prefix ?? '')
+  const [phoneNumber, setPhoneNumber] = useState(profile.phone_number ?? '')
+  const [addressLine1, setAddressLine1] = useState(profile.address_line1 ?? '')
+  const [addressLine2, setAddressLine2] = useState(profile.address_line2 ?? '')
+  const [city, setCity] = useState(profile.city ?? '')
+  const [county, setCounty] = useState(profile.county ?? '')
+  const [postCode, setPostCode] = useState(profile.post_code ?? '')
+  const [country, setCountry] = useState(profile.country ?? '')
   const [avatarPath, setAvatarPath] = useState<string | null>(profile.avatar_url)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(initialAvatarSignedUrl)
   const [saving, setSaving] = useState(false)
@@ -34,7 +42,8 @@ export function ProfileEditor({ user, profile, initialAvatarSignedUrl }: Props) 
   const [cropOpen, setCropOpen] = useState(false)
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null)
 
-  const initial = getProfileInitialLetter(fullName, user.email)
+  const displayName = [firstName, lastName].map((value) => value.trim()).filter(Boolean).join(' ')
+  const initial = getProfileInitialLetter(displayName || profile.full_name, user.email)
 
   useEffect(() => {
     return () => {
@@ -115,8 +124,17 @@ export function ProfileEditor({ user, profile, initialAvatarSignedUrl }: Props) 
     const { error } = await supabase
       .from('profiles')
       .update({
-        full_name: fullName.trim(),
-        phone: phone.trim() || null,
+        first_name: firstName.trim() || null,
+        last_name: lastName.trim() || null,
+        phone_prefix: phonePrefix.trim() || null,
+        phone_number: phoneNumber.trim() || null,
+        address_line1: addressLine1.trim() || null,
+        address_line2: addressLine2.trim() || null,
+        city: city.trim() || null,
+        county: county.trim() || null,
+        post_code: postCode.trim() || null,
+        country: country.trim() || null,
+        full_name: displayName || profile.full_name,
       })
       .eq('id', user.id)
 
@@ -211,33 +229,98 @@ export function ProfileEditor({ user, profile, initialAvatarSignedUrl }: Props) 
 
       <Card>
         <CardHeader>
-          <CardTitle>Contact</CardTitle>
-          <CardDescription>Name and phone stored on your practice profile.</CardDescription>
+          <CardTitle>Contact details</CardTitle>
+          <CardDescription>Profile details stored on your practice profile.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSaveProfile} className="space-y-4 max-w-md">
+          <form onSubmit={handleSaveProfile} className="grid max-w-3xl gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="full_name">Full name</Label>
+              <Label htmlFor="first_name">First name</Label>
               <Input
-                id="full_name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                autoComplete="name"
+                id="first_name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                autoComplete="given-name"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="last_name">Last name</Label>
               <Input
-                id="phone"
+                id="last_name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                autoComplete="family-name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone_prefix">Phone prefix</Label>
+              <Input
+                id="phone_prefix"
                 type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={phonePrefix}
+                onChange={(e) => setPhonePrefix(e.target.value)}
+                autoComplete="tel-country-code"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone_number">Phone number</Label>
+              <Input
+                id="phone_number"
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
                 autoComplete="tel"
               />
             </div>
-            <Button type="submit" disabled={saving}>
-              {saving ? 'Saving…' : 'Save profile'}
-            </Button>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="address_line1">Address line 1</Label>
+              <Input
+                id="address_line1"
+                value={addressLine1}
+                onChange={(e) => setAddressLine1(e.target.value)}
+                autoComplete="address-line1"
+              />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="address_line2">Address line 2</Label>
+              <Input
+                id="address_line2"
+                value={addressLine2}
+                onChange={(e) => setAddressLine2(e.target.value)}
+                autoComplete="address-line2"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="city">City</Label>
+              <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} autoComplete="address-level2" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="county">County</Label>
+              <Input
+                id="county"
+                value={county}
+                onChange={(e) => setCounty(e.target.value)}
+                autoComplete="address-level1"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="post_code">Post code</Label>
+              <Input
+                id="post_code"
+                value={postCode}
+                onChange={(e) => setPostCode(e.target.value)}
+                autoComplete="postal-code"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="country">Country</Label>
+              <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} autoComplete="country-name" />
+            </div>
+            <div className="sm:col-span-2">
+              <Button type="submit" disabled={saving}>
+                {saving ? 'Saving…' : 'Save changes'}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
