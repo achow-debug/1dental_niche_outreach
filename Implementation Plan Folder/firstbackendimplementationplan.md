@@ -248,7 +248,55 @@ Follow these during implementation:
 - **Toasts:** Top-left; fix Radix viewport (`fixed left-4 top-4`) or Sonner `position="top-left"`—one system only.
 - **Dashboard shell:** Sidebar, breadcrumbs, page title, primary actions.
 - **Loading/empty:** `skeleton.tsx`, `empty.tsx`.
+- **Admin IA (approved):** Left sidebar nav includes `treatment types`, `clients`, `bookings`; each area supports CRUD flows on dedicated pages.
+- **Overview navigation:** Keep summary cards under header and add quick links for common admin actions.
+- **Header account menu:** Top-right profile image + user name opens the same branded dropdown style used on the root page.
+- **Mobile-first behavior:** Start with phone layout; collapsible/off-canvas sidebar, touch-safe targets, responsive table fallbacks (horizontal scroll + compact row actions), and profile dropdown behavior tuned for small screens.
+- **Visual style:** Introduce subtle glassmorphism on summary cards while preserving readability/contrast and token compliance.
 - **Second plan “Do / Don’t”:** Avoid arbitrary hex outside tokens; optional admin layout without film-grain if it hurts readability.
+
+---
+
+## Realtime notification centre (scope expansion before implementation)
+
+Add a dedicated, real-time notification center to support operational awareness in admin workflows.
+
+### Product scope (v1)
+
+- In-app notification bell in admin header with unread count.
+- Dropdown/panel for latest items and a full notifications page for history.
+- Notification types: new booking, booking cancellation, booking reschedule, new client signup, session capacity threshold reached, and system/admin announcements.
+- Actions: mark read/unread, mark all as read, deep-link to related entity (`booking`, `client`, `session`).
+- Priority/severity labels (`info`, `warning`, `critical`) with visual hierarchy.
+
+### Data + backend requirements
+
+- Add `notifications` table (UUID, `recipient_user_id`, `type`, `title`, `body`, `entity_type`, `entity_id`, `cta_url`, `severity`, `is_read`, `read_at`, `created_at`, optional `metadata` jsonb).
+- Add indexes for `recipient_user_id`, `is_read`, `created_at DESC`.
+- RLS: users can read/update only their own notifications; admins can create/broadcast via trusted server paths only.
+- Create trusted write path for system events (Edge Function, server action, or DB trigger pipeline) so clients cannot spoof notifications.
+- Use Supabase Realtime channel subscription for live delivery in admin UI.
+
+### UX + operational requirements
+
+- Mobile-first tray/panel behavior and keyboard accessibility on desktop.
+- Batch updates to reduce noisy UI refresh (debounced unread count updates).
+- Offline/resume behavior: fetch latest unread count and missed notifications on reconnect.
+- Retention policy: archive/prune old notifications (e.g. 90-180 days) and document in privacy/ops notes.
+
+---
+
+## Contextual quick actions (admin overview + list pages)
+
+Provide role-aware, context-sensitive quick actions to reduce navigation hops:
+
+- Global quick actions on overview: `New treatment type`, `Add client`, `Create booking`, `Open today’s bookings`.
+- Contextual actions per module:
+  - `treatment types`: create, duplicate, archive, restore.
+  - `clients`: add client, open profile, create booking for client, suspend/unsuspend.
+  - `bookings`: confirm, reschedule, cancel, mark no-show, restore archived.
+- Guardrails: confirmation dialogs for destructive actions, clear undo/restore path where possible, and toast feedback for all mutations.
+- Mobile-first: expose actions through compact action sheet / dropdown instead of dense inline buttons.
 
 ---
 
@@ -287,12 +335,27 @@ Create **`DESIGN_TOKENS.md`** (repo root or `/docs`) locking:
 - **Phase 0 — Project setup:** Supabase project; env vars (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` server-only); `@supabase/supabase-js` + `@supabase/ssr`; `middleware.ts` session refresh.
 - **Phase 1 — Schema + RLS + soft delete:** Migrations including `session_categories`, `session_types`, `practice_settings`, `deleted_at` on bookings/sessions; indexes; RLS + helpers; optional seed session types as **rows**. **First admin** is created only **after** this phase, **manually** in Supabase (not via app signup).
 - **Phase 2 — Auth & profile:** `/login`, `/signup`, `/profile`; profiles sync trigger on `auth.users` insert. **Early milestone:** ship signup/login **before** full catalog work; add **mock** admin and user dashboard pages to validate roles (see **Revised execution order**).
-- **Phase 3 — Catalog & sessions (admin):** CRUD categories → session types → session instances; validation; cancellation vs soft-delete semantics.
+- **Phase 3 — g & sessions (admin):** CRUD categories → session types → session instances; validation; cancellation vs soft-delete semantics.Catalo
 - **Phase 4 — Booking (client):** Replace demo on `app/book/page.tsx`; enforce `max_advance_booking_days`; role promotion `user` → `client`; client booking pages.
 - **Phase 5 — Admin dashboards:** Overview, bookings, sessions, clients, reporting, settings (incl. max advance), users.
 - **Phase 6 — Availability engine:** CRUD `availability_rules` / exceptions; optional generator respecting advance window.
 - **Phase 7 — History, media, functions:** Triggers/app writes for histories; login pipeline; Storage optional.
 - **Phase 8 — QA:** E2E signup → book → admin confirm; RLS checks; runbooks (soft-delete restore, GDPR export future).
+
+### Phase 3 (Admin) checklist — updated
+
+- [x] **Navigation shell (mobile-first):** left sidebar with `treatment types`, `clients`, `bookings`; default mobile layout with collapsible/off-canvas behavior and touch-safe targets.
+- [x] **Header account control:** top-right profile image + user name; on click/tap open the same branded root-page dropdown style; ensure small-screen positioning and dismissal behavior.
+- [x] **Wayfinding:** breadcrumbs on all admin pages and clear active state in sidebar.
+- [x] **Overview structure:** retain summary cards below header; add contextual quick actions and quick links (e.g. new treatment type, add client, create booking, open today’s bookings).
+- [x] **Table UX baseline:** searchable, filterable, sortable, paginated tables across treatment types/clients/bookings with loading and empty states.
+- [x] **Destructive safeguards:** confirmation dialogs for delete/archive/cancel, explicit destructive styling, toast outcomes, and restore/undo path where supported.
+- [x] **Treatment types CRUD:** create/edit/duplicate/archive/restore categories and related treatment type rows with soft-delete-safe semantics.
+- [x] **Clients CRUD:** create/edit/suspend/unsuspend/archive/restore client records with role/status-safe guardrails.
+- [x] **Bookings CRUD:** create/confirm/reschedule/cancel/no-show/archive/restore flows with status and audit/history compatibility.
+- [x] **Glassmorphism usage:** apply subtle glassmorphism to summary cards only; keep text contrast AA+, avoid visual noise, and remain token-compliant per branding docs.
+- [x] **Realtime notification center (v1):** bell + unread badge in header, notification panel/list page, mark read/unread, mark all read, deep links to entities, priority levels.
+- [ ] **Realtime notification center (backend readiness):** `notifications` table + indexes, strict RLS, trusted event write path (server/edge/trigger), Supabase Realtime subscription, reconnect/backfill strategy, and retention/pruning policy.
 
 When leaving plan mode, **create `IMPLEMENTATION_PLAN.md`** at project root with phased detail and implement phase-by-phase (second plan deliverables table).
 
@@ -321,6 +384,13 @@ When leaving plan mode, **create `IMPLEMENTATION_PLAN.md`** at project root with
 - [ ] **`DESIGN_TOKENS.md`** with palette + Card/Table patterns.
 - [ ] Toasts **top-left**; slug pages over heavy modals.
 - [ ] First admin via Supabase console; ongoing staff via **Admin → User management**.
+- [ ] **Admin dashboard shell:** left sidebar (`treatment types`, `clients`, `bookings`), breadcrumbs, header profile avatar + name + branded root-style dropdown.
+- [ ] **Overview layout:** summary cards retained below header + quick links + contextual quick actions.
+- [ ] **CRUD UX baseline:** searchable/sortable/filterable/paginated tables, empty states, loading skeletons, row actions.
+- [ ] **Destructive safeguards:** confirmation modals for delete/archive/cancel + audit-safe soft delete + toast result feedback.
+- [ ] **Mobile-first/responsive:** collapsible sidebar, touch-first spacing, responsive table behavior, dropdown ergonomics on small screens.
+- [ ] **Notification centre:** realtime unread badge, notification panel/list page, mark read/unread, deep links, event pipeline + RLS.
+- [ ] **Glassmorphism:** apply subtle glass card style to summary cards only, preserving token usage, readability, and contrast.
 
 ---
 
