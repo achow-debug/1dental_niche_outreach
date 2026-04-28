@@ -1,18 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { MoreHorizontal, Plus, Search } from 'lucide-react'
-import { CLIENTS, type ClientRow } from '@/lib/mocks/admin'
+import { useEffect, useMemo, useState } from 'react'
+import { Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react'
+import { type ClientRow } from '@/lib/mocks/admin'
+import { createClient as createSupabaseClient } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
@@ -35,21 +29,106 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 const PAGE_SIZE = 5
 
+type ProfileListItem = {
+  id: string
+  first_name: string | null
+  last_name: string | null
+  email: string | null
+  phone: string | null
+  role: 'user' | 'client' | 'staff' | 'admin'
+  status: 'active' | 'suspended' | 'banned' | 'pending_review'
+}
+
+function toClientRow(profile: ProfileListItem): ClientRow {
+  const fullName = [profile.first_name?.trim(), profile.last_name?.trim()].filter(Boolean).join(' ')
+
+  return {
+    id: profile.id,
+    name: fullName || 'Unnamed user',
+    email: profile.email?.trim() || 'No email on file',
+    phone: profile.phone ?? 'No phone on file',
+    status: profile.status === 'active' ? 'active' : 'suspended',
+    role: profile.role === 'admin' ? 'admin' : profile.role === 'client' ? 'client' : 'user',
+    totalBookings: 0,
+    lastBooking: '',
+    engagementScore: 0,
+  }
+}
+
 export default function ClientsPage() {
-  const [rows, setRows] = useState<ClientRow[]>(CLIENTS)
+  const isMobile = useIsMobile()
+  const [rows, setRows] = useState<ClientRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'suspended'>('all')
+  const [roleFilter, setRoleFilter] = useState<'all' | ClientRow['role']>('all')
   const [sortBy, setSortBy] = useState<'name' | 'bookings'>('name')
   const [page, setPage] = useState(1)
   const [savingRoleId, setSavingRoleId] = useState<string | null>(null)
+  const [activeRowId, setActiveRowId] = useState<string | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadClients() {
+      const supabase = createSupabaseClient()
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, phone, role, status')
+        // New signups start as "user" until first booking promotes them to "client".
+        .in('role', ['user', 'client'])
+        .order('created_at', { ascending: false })
+
+      if (cancelled) return
+
+      if (error) {
+        setLoadError(error.message)
+      } else {
+        const mapped = (data ?? []).map((item) => toClientRow(item as ProfileListItem))
+        setRows(mapped)
+      }
+      setLoading(false)
+    }
+
+    void loadClients()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadCurrentUser() {
+      const supabase = createSupabaseClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!cancelled) {
+        setCurrentUserId(user?.id ?? null)
+      }
+    }
+
+    void loadCurrentUser()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
     const next = rows.filter((row) => {
       if (statusFilter !== 'all' && row.status !== statusFilter) return false
+      if (roleFilter !== 'all' && row.role !== roleFilter) return false
       if (!term) return true
       return row.name.toLowerCase().includes(term) || row.email.toLowerCase().includes(term)
     })
@@ -58,7 +137,7 @@ export default function ClientsPage() {
       if (sortBy === 'bookings') return b.totalBookings - a.totalBookings
       return a.name.localeCompare(b.name)
     })
-  }, [rows, search, statusFilter, sortBy])
+  }, [rows, search, statusFilter, roleFilter, sortBy])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
@@ -76,6 +155,27 @@ export default function ClientsPage() {
     runAction('Client status updated')
   }
 
+  function openViewModal(id: string) {
+    setActiveRowId(id)
+  }
+
+  function closeViewModal() {
+    setActiveRowId(null)
+  }
+
+  function deleteClient(id: string) {
+    if (id === currentUserId) {
+      toast({
+        title: 'Cannot delete your own profile',
+        description: 'Use another admin account if this account must be removed.',
+      })
+      return
+    }
+    setRows((prev) => prev.filter((row) => row.id !== id))
+    setActiveRowId(null)
+    runAction('Client deleted')
+  }
+
   async function updateRole(id: string, role: ClientRow['role']) {
     setSavingRoleId(id)
     await new Promise((resolve) => setTimeout(resolve, 500))
@@ -83,6 +183,8 @@ export default function ClientsPage() {
     setSavingRoleId(null)
     runAction(`Role updated to ${role}`)
   }
+
+  const activeClient = activeRowId ? rows.find((row) => row.id === activeRowId) ?? null : null
 
   return (
     <div className="space-y-4">
@@ -108,10 +210,14 @@ export default function ClientsPage() {
           <CardDescription>
             Searchable directory, engagement tracking, role management, and responsive fallback cards.
           </CardDescription>
+          {loadError ? <p className="text-xs text-destructive">Error fetching clients: {loadError}</p> : null}
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-2 sm:grid-cols-3">
-            <div className="relative sm:col-span-2">
+          {loading ? (
+            <div className="rounded-lg border border-border/70 p-3 text-sm text-muted-foreground">Loading clients...</div>
+          ) : null}
+          <div className="grid gap-2 md:grid-cols-4">
+            <div className="relative md:col-span-2">
               <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
               <Input
                 value={search}
@@ -123,7 +229,7 @@ export default function ClientsPage() {
                 className="pl-9"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:col-span-2">
               <Select
                 value={statusFilter}
                 onValueChange={(value: 'all' | 'active' | 'suspended') => {
@@ -140,6 +246,23 @@ export default function ClientsPage() {
                   <SelectItem value="suspended">Suspended</SelectItem>
                 </SelectContent>
               </Select>
+              <Select
+                value={roleFilter}
+                onValueChange={(value: 'all' | ClientRow['role']) => {
+                  setRoleFilter(value)
+                  setPage(1)
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All roles</SelectItem>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="client">Client</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={sortBy} onValueChange={(value: 'name' | 'bookings') => setSortBy(value)}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -154,17 +277,28 @@ export default function ClientsPage() {
 
           <div className="space-y-3 md:hidden">
             {currentRows.map((row) => (
-              <div key={row.id} className="rounded-lg border border-border/70 p-3">
-                <div className="flex items-center justify-between">
-                  <p className="font-medium">{row.name}</p>
-                  <Badge variant={row.status === 'active' ? 'secondary' : 'outline'}>{row.status}</Badge>
+                  <button
+                key={row.id}
+                type="button"
+                className="w-full rounded-xl border border-border/70 p-4 text-left transition hover:bg-muted/30"
+                onClick={() => openViewModal(row.id)}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium">{row.name}</p>
+                    <p className="mt-0.5 truncate text-sm text-muted-foreground">{row.email}</p>
+                  </div>
+                  <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/60 bg-background">
+                    <Eye className="size-4" />
+                  </span>
                 </div>
-                <p className="text-sm text-muted-foreground">{row.email}</p>
-                <p className="text-xs text-muted-foreground">{row.phone}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Role: {row.role} · Engagement: {row.engagementScore}%
-                </p>
-              </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Badge variant={row.status === 'active' ? 'secondary' : 'outline'}>{row.status}</Badge>
+                  <Badge variant="outline">{row.role}</Badge>
+                  {row.id === currentUserId ? <Badge variant="secondary">You</Badge> : null}
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">{row.phone}</p>
+              </button>
             ))}
           </div>
 
@@ -184,13 +318,17 @@ export default function ClientsPage() {
               </TableHeader>
               <TableBody>
                 {currentRows.map((row) => (
-                  <TableRow key={row.id}>
+                  <TableRow
+                    key={row.id}
+                    className="cursor-pointer"
+                    onClick={() => openViewModal(row.id)}
+                  >
                     <TableCell className="font-medium">{row.name}</TableCell>
                     <TableCell>{row.email}</TableCell>
                     <TableCell>{row.phone}</TableCell>
                     <TableCell>{row.totalBookings}</TableCell>
                     <TableCell>{row.engagementScore}%</TableCell>
-                    <TableCell>
+                    <TableCell onClick={(event) => event.stopPropagation()}>
                       <Select value={row.role} onValueChange={(value: ClientRow['role']) => void updateRole(row.id, value)}>
                         <SelectTrigger className="w-[130px]" disabled={savingRoleId === row.id}>
                           <SelectValue />
@@ -203,52 +341,23 @@ export default function ClientsPage() {
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={row.status === 'active' ? 'secondary' : 'outline'}>{row.status}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={row.status === 'active' ? 'secondary' : 'outline'}>{row.status}</Badge>
+                        {row.id === currentUserId ? <Badge variant="secondary">You</Badge> : null}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="size-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onSelect={() => runAction('Client profile opened')}>Open profile</DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => runAction('Create booking flow opened')}>
-                            Create booking
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => runAction('Engagement timeline opened')}>
-                            View engagement
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem
-                                onSelect={(event) => event.preventDefault()}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                {row.status === 'active' ? 'Suspend' : 'Unsuspend'}
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  {row.status === 'active' ? 'Suspend client?' : 'Unsuspend client?'}
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This change keeps all historical records and can be reversed later.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => toggleSuspend(row.id)}>
-                                  Confirm
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`View ${row.name}`}
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          openViewModal(row.id)
+                        }}
+                      >
+                        <Eye className="size-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -256,11 +365,11 @@ export default function ClientsPage() {
             </Table>
           </div>
 
-          <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <span>
               Showing {currentRows.length} of {filtered.length} entries
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>
                 Previous
               </Button>
@@ -279,6 +388,172 @@ export default function ClientsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {isMobile ? (
+        <Sheet open={Boolean(activeClient)} onOpenChange={(open) => (!open ? closeViewModal() : null)}>
+          <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto rounded-t-2xl">
+            {activeClient ? (
+              <>
+                <SheetHeader>
+                  <SheetTitle className="flex items-center gap-2">
+                    {activeClient.name}
+                    {activeClient.id === currentUserId ? <Badge variant="secondary">You</Badge> : null}
+                  </SheetTitle>
+                  <SheetDescription>View client details and run quick actions.</SheetDescription>
+                </SheetHeader>
+                <div className="space-y-3 px-4 pb-4 text-sm">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Email</p>
+                    <p className="break-all">{activeClient.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Phone</p>
+                    <p>{activeClient.phone}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline" className="capitalize">{activeClient.role}</Badge>
+                    <Badge variant={activeClient.status === 'active' ? 'secondary' : 'outline'} className="capitalize">
+                      {activeClient.status}
+                    </Badge>
+                  </div>
+                  <div className="space-y-2 pt-1">
+                    <Button className="w-full" variant="outline" onClick={() => runAction('Edit client flow opened')}>
+                      <Pencil className="mr-2 size-4" />
+                      Edit
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button className="w-full" variant="ghost">
+                          {activeClient.status === 'active' ? 'Suspend' : 'Unsuspend'}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            {activeClient.status === 'active' ? 'Suspend client?' : 'Unsuspend client?'}
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This change keeps all historical records and can be reversed later.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => toggleSuspend(activeClient.id)}>Confirm</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button className="w-full" variant="destructive" disabled={activeClient.id === currentUserId}>
+                          <Trash2 className="mr-2 size-4" />
+                          Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this client?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action removes the profile from the list. Continue only if you are sure.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deleteClient(activeClient.id)}>
+                            Confirm delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              </>
+            ) : null}
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={Boolean(activeClient)} onOpenChange={(open) => (!open ? closeViewModal() : null)}>
+          <DialogContent className="sm:max-w-xl">
+            {activeClient ? (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    {activeClient.name}
+                    {activeClient.id === currentUserId ? <Badge variant="secondary">You</Badge> : null}
+                  </DialogTitle>
+                  <DialogDescription>View client details and run quick actions.</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-3 text-sm sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Email</p>
+                    <p>{activeClient.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Phone</p>
+                    <p>{activeClient.phone}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Role</p>
+                    <p className="capitalize">{activeClient.role}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Status</p>
+                    <p className="capitalize">{activeClient.status}</p>
+                  </div>
+                </div>
+                <DialogFooter className="sm:justify-between">
+                  <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                    <Button variant="outline" onClick={() => runAction('Edit client flow opened')}>
+                      <Pencil className="mr-2 size-4" />
+                      Edit
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" disabled={activeClient.id === currentUserId}>
+                          <Trash2 className="mr-2 size-4" />
+                          Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this client?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action removes the profile from the list. Continue only if you are sure.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deleteClient(activeClient.id)}>
+                            Confirm delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost">{activeClient.status === 'active' ? 'Suspend' : 'Unsuspend'}</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          {activeClient.status === 'active' ? 'Suspend client?' : 'Unsuspend client?'}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This change keeps all historical records and can be reversed later.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => toggleSuspend(activeClient.id)}>Confirm</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </DialogFooter>
+              </>
+            ) : null}
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

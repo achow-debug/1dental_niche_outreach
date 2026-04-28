@@ -112,7 +112,7 @@ export function AdminShell({ email, fullName, avatarUrl, children }: Props) {
           <div className="flex flex-col gap-3 px-4 py-3 sm:px-6">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <SidebarTrigger className="h-9 w-9 rounded-md border border-border/70" />
+                <SidebarTrigger className="hidden h-9 w-9 rounded-md border border-border/70 md:inline-flex" />
                 <span className="text-sm font-semibold">Admin</span>
               </div>
               <div className="flex items-center gap-2">
@@ -143,6 +143,7 @@ export function AdminShell({ email, fullName, avatarUrl, children }: Props) {
             </Breadcrumb>
           </div>
         </header>
+        <SidebarTrigger className="fixed right-4 z-30 h-10 w-10 rounded-full border border-border/70 bg-background/95 shadow-sm md:hidden" style={{ bottom: 'max(1rem, env(safe-area-inset-bottom))' }} />
         <main className="px-4 py-6 sm:px-6">{children}</main>
       </SidebarInset>
     </SidebarProvider>
