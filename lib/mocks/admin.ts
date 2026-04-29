@@ -31,6 +31,7 @@ export type BookingRow = {
   treatmentType: string
   date: string
   time: string
+  price: number
   status: 'pending' | 'confirmed' | 'cancelled' | 'no_show'
 }
 
@@ -68,6 +69,15 @@ export type NotificationItem = {
   severity: 'info' | 'warning' | 'critical'
   read: boolean
   href: string
+  createdAt: string
+}
+
+export type RecentActivityItem = {
+  id: string
+  actorType: 'user' | 'admin'
+  actorName: string
+  action: string
+  target: string
   createdAt: string
 }
 
@@ -166,6 +176,7 @@ export const BOOKINGS: BookingRow[] = [
     treatmentType: 'Hygiene maintenance',
     date: '2026-04-26',
     time: '09:30',
+    price: 85,
     status: 'confirmed',
   },
   {
@@ -174,6 +185,7 @@ export const BOOKINGS: BookingRow[] = [
     treatmentType: 'New patient exam',
     date: '2026-04-26',
     time: '10:30',
+    price: 120,
     status: 'pending',
   },
   {
@@ -182,6 +194,7 @@ export const BOOKINGS: BookingRow[] = [
     treatmentType: 'Emergency review',
     date: '2026-04-25',
     time: '14:00',
+    price: 95,
     status: 'cancelled',
   },
   {
@@ -190,6 +203,7 @@ export const BOOKINGS: BookingRow[] = [
     treatmentType: 'Teeth whitening',
     date: '2026-04-27',
     time: '12:15',
+    price: 240,
     status: 'no_show',
   },
 ]
@@ -278,5 +292,40 @@ export const NOTIFICATIONS: NotificationItem[] = [
     read: true,
     href: '/admin/bookings',
     createdAt: '45m ago',
+  },
+]
+
+export const RECENT_ACTIVITY: RecentActivityItem[] = [
+  {
+    id: 'act-001',
+    actorType: 'user',
+    actorName: 'Noah Williams',
+    action: 'Requested new patient exam booking',
+    target: 'Booking bk-002',
+    createdAt: '2m ago',
+  },
+  {
+    id: 'act-002',
+    actorType: 'admin',
+    actorName: 'Admin team',
+    action: 'Confirmed hygiene maintenance booking',
+    target: 'Booking bk-001',
+    createdAt: '11m ago',
+  },
+  {
+    id: 'act-003',
+    actorType: 'admin',
+    actorName: 'Dr. Ahmed',
+    action: 'Updated treatment template pricing',
+    target: 'Invisalign consultation',
+    createdAt: '27m ago',
+  },
+  {
+    id: 'act-004',
+    actorType: 'user',
+    actorName: 'Ariana Moore',
+    action: 'Viewed upcoming appointment details',
+    target: 'Booking bk-004',
+    createdAt: '39m ago',
   },
 ]

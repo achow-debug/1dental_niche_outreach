@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { type ClientRow } from '@/lib/mocks/admin'
 import { createClient as createSupabaseClient } from '@/lib/supabase/client'
@@ -41,18 +42,21 @@ type ProfileListItem = {
   last_name: string | null
   email: string | null
   phone: string | null
+  phone_prefix: string | null
+  phone_number: string | null
   role: 'user' | 'client' | 'staff' | 'admin'
   status: 'active' | 'suspended' | 'banned' | 'pending_review'
 }
 
 function toClientRow(profile: ProfileListItem): ClientRow {
   const fullName = [profile.first_name?.trim(), profile.last_name?.trim()].filter(Boolean).join(' ')
+  const fallbackPhone = [profile.phone_prefix?.trim(), profile.phone_number?.trim()].filter(Boolean).join(' ')
 
   return {
     id: profile.id,
     name: fullName || 'Unnamed user',
     email: profile.email?.trim() || 'No email on file',
-    phone: profile.phone ?? 'No phone on file',
+    phone: profile.phone ?? fallbackPhone || 'No phone on file',
     status: profile.status === 'active' ? 'active' : 'suspended',
     role: profile.role === 'admin' ? 'admin' : profile.role === 'client' ? 'client' : 'user',
     totalBookings: 0,
@@ -62,6 +66,7 @@ function toClientRow(profile: ProfileListItem): ClientRow {
 }
 
 export default function ClientsPage() {
+  const router = useRouter()
   const isMobile = useIsMobile()
   const [rows, setRows] = useState<ClientRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -74,31 +79,42 @@ export default function ClientsPage() {
   const [savingRoleId, setSavingRoleId] = useState<string | null>(null)
   const [activeRowId, setActiveRowId] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [addDialogOpen, setAddDialogOpen] = useState(false)
+  const [creatingClient, setCreatingClient] = useState(false)
+  const [newClientFirstName, setNewClientFirstName] = useState('')
+  const [newClientLastName, setNewClientLastName] = useState('')
+  const [newClientEmail, setNewClientEmail] = useState('')
+  const [newClientPhone, setNewClientPhone] = useState('')
+
+  async function loadClients() {
+    const supabase = createSupabaseClient()
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, email, phone, phone_prefix, phone_number, role, status')
+      .in('role', ['user', 'client'])
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      setLoadError(error.message)
+      return
+    }
+
+    setLoadError(null)
+    const mapped = (data ?? []).map((item) => toClientRow(item as ProfileListItem))
+    setRows(mapped)
+  }
 
   useEffect(() => {
     let cancelled = false
 
-    async function loadClients() {
-      const supabase = createSupabaseClient()
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email, phone, role, status')
-        // New signups start as "user" until first booking promotes them to "client".
-        .in('role', ['user', 'client'])
-        .order('created_at', { ascending: false })
-
-      if (cancelled) return
-
-      if (error) {
-        setLoadError(error.message)
-      } else {
-        const mapped = (data ?? []).map((item) => toClientRow(item as ProfileListItem))
-        setRows(mapped)
+    async function loadInitialClients() {
+      await loadClients()
+      if (!cancelled) {
+        setLoading(false)
       }
-      setLoading(false)
     }
 
-    void loadClients()
+    void loadInitialClients()
 
     return () => {
       cancelled = true
@@ -145,13 +161,75 @@ export default function ClientsPage() {
   const currentRows = filtered.slice(start, start + PAGE_SIZE)
 
   function runAction(message: string) {
-    toast({ title: message, description: 'Mock action only. API wiring comes next.' })
+    toast({ title: message })
   }
 
-  function toggleSuspend(id: string) {
-    setRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, status: row.status === 'active' ? 'suspended' : 'active' } : row)),
-    )
+  async function addClient() {
+    const firstName = newClientFirstName.trim()
+    const lastName = newClientLastName.trim()
+    const email = newClientEmail.trim().toLowerCase()
+    const phone = newClientPhone.trim()
+    const fullName = [firstName, lastName].filter(Boolean).join(' ')
+
+    if (!firstName || !lastName || !email) {
+      toast({
+        title: 'Missing required fields',
+        description: 'First name, last name, and email are required.',
+      })
+      return
+    }
+
+    setCreatingClient(true)
+    const response = await fetch('/api/admin/clients', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        email,
+        phone,
+      }),
+    })
+    const payload = (await response.json().catch(() => ({}))) as { error?: string }
+    setCreatingClient(false)
+
+    if (!response.ok) {
+      toast({
+        title: 'Failed to add client',
+        description: payload.error ?? 'Unknown server error',
+      })
+      return
+    }
+
+    setNewClientFirstName('')
+    setNewClientLastName('')
+    setNewClientEmail('')
+    setNewClientPhone('')
+    setAddDialogOpen(false)
+    await loadClients()
+    setPage(1)
+    toast({
+      title: 'Client added',
+      description: `${fullName} was saved to Supabase and added to this list.`,
+    })
+  }
+
+  async function toggleSuspend(id: string) {
+    const target = rows.find((row) => row.id === id)
+    if (!target) return
+    const nextStatus = target.status === 'active' ? 'suspended' : 'active'
+    const supabase = createSupabaseClient()
+    const { error } = await supabase.from('profiles').update({ status: nextStatus }).eq('id', id)
+
+    if (error) {
+      toast({
+        title: 'Status update failed',
+        description: error.message,
+      })
+      return
+    }
+
+    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, status: nextStatus } : row)))
     runAction('Client status updated')
   }
 
@@ -163,7 +241,7 @@ export default function ClientsPage() {
     setActiveRowId(null)
   }
 
-  function deleteClient(id: string) {
+  async function deleteClient(id: string) {
     if (id === currentUserId) {
       toast({
         title: 'Cannot delete your own profile',
@@ -171,6 +249,17 @@ export default function ClientsPage() {
       })
       return
     }
+    const supabase = createSupabaseClient()
+    const { error } = await supabase.from('profiles').delete().eq('id', id)
+
+    if (error) {
+      toast({
+        title: 'Delete failed',
+        description: error.message,
+      })
+      return
+    }
+
     setRows((prev) => prev.filter((row) => row.id !== id))
     setActiveRowId(null)
     runAction('Client deleted')
@@ -178,7 +267,16 @@ export default function ClientsPage() {
 
   async function updateRole(id: string, role: ClientRow['role']) {
     setSavingRoleId(id)
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    const supabase = createSupabaseClient()
+    const { error } = await supabase.from('profiles').update({ role }).eq('id', id)
+    if (error) {
+      setSavingRoleId(null)
+      toast({
+        title: 'Role update failed',
+        description: error.message,
+      })
+      return
+    }
     setRows((prev) => prev.map((row) => (row.id === id ? { ...row, role } : row)))
     setSavingRoleId(null)
     runAction(`Role updated to ${role}`)
@@ -194,10 +292,23 @@ export default function ClientsPage() {
           <p className="text-sm text-muted-foreground">Manage client records with contextual actions and safeguards.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" className="rounded-full">
+          <Button
+            variant="outline"
+            className="rounded-full"
+            onClick={() => {
+              if (!activeClient) {
+                toast({
+                  title: 'Select a client first',
+                  description: 'Open a client row, then create a booking for that client.',
+                })
+                return
+              }
+              router.push(`/admin/bookings?clientName=${encodeURIComponent(activeClient.name)}`)
+            }}
+          >
             Create booking for client
           </Button>
-          <Button className="rounded-full">
+          <Button className="rounded-full" onClick={() => setAddDialogOpen(true)}>
             <Plus className="mr-2 size-4" />
             Add client
           </Button>
@@ -554,6 +665,46 @@ export default function ClientsPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add client</DialogTitle>
+            <DialogDescription>Create a client profile and save it to Supabase.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-1">
+            <Input
+              value={newClientFirstName}
+              onChange={(event) => setNewClientFirstName(event.target.value)}
+              placeholder="First name"
+            />
+            <Input
+              value={newClientLastName}
+              onChange={(event) => setNewClientLastName(event.target.value)}
+              placeholder="Last name"
+            />
+            <Input
+              type="email"
+              value={newClientEmail}
+              onChange={(event) => setNewClientEmail(event.target.value)}
+              placeholder="Email"
+            />
+            <Input
+              value={newClientPhone}
+              onChange={(event) => setNewClientPhone(event.target.value)}
+              placeholder="Phone (optional)"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddDialogOpen(false)} disabled={creatingClient}>
+              Cancel
+            </Button>
+            <Button onClick={() => void addClient()} disabled={creatingClient}>
+              {creatingClient ? 'Saving...' : 'Save client'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
