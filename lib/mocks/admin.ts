@@ -32,7 +32,7 @@ export type BookingRow = {
   date: string
   time: string
   price: number
-  status: 'pending' | 'confirmed' | 'cancelled' | 'no_show'
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
 }
 
 export type ServiceCategory = {

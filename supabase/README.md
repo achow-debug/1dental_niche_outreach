@@ -8,7 +8,11 @@
 
 ## Environment variables
 
-Copy `.env.local.example` to `.env.local` and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from **Project Settings → API**.
+Copy `.env.local.example` to `.env.local` and set:
+
+- `NEXT_PUBLIC_SUPABASE_URL` from **Project Settings → API**
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` from **Project Settings → API**
+- `SUPABASE_SERVICE_ROLE_KEY` from **Project Settings → API** (required for admin create flows like add client/add booking)
 
 ## First admin user (manual)
 

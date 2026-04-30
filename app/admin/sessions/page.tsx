@@ -1,15 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Loader2, Plus } from 'lucide-react'
-import {
-  ACTIVE_SERVICES,
-  SERVICE_CATEGORIES,
-  SERVICE_TEMPLATES,
-  type ActiveService,
-  type ServiceCategory,
-  type ServiceTemplate,
-} from '@/lib/mocks/admin'
+import type { ActiveService, ServiceCategory, ServiceTemplate } from '@/lib/mocks/admin'
+import { loadServiceCatalog } from '@/lib/admin/service-catalog'
+import { createClient as createSupabaseClient } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,14 +21,16 @@ function addMinutesToDateTime(iso: string, minutes: number) {
 }
 
 export default function AdminSessionsPage() {
-  const [categories, setCategories] = useState<ServiceCategory[]>(SERVICE_CATEGORIES)
-  const [templates, setTemplates] = useState<ServiceTemplate[]>(SERVICE_TEMPLATES)
-  const [services, setServices] = useState<ActiveService[]>(ACTIVE_SERVICES)
+  const [categories, setCategories] = useState<ServiceCategory[]>([])
+  const [templates, setTemplates] = useState<ServiceTemplate[]>([])
+  const [services, setServices] = useState<ActiveService[]>([])
   const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const [newCategoryName, setNewCategoryName] = useState('')
   const [newTemplateTitle, setNewTemplateTitle] = useState('')
-  const [newTemplateCategory, setNewTemplateCategory] = useState('')
+  const [newTemplateCategoryId, setNewTemplateCategoryId] = useState('')
   const [newTemplatePrice, setNewTemplatePrice] = useState('95')
   const [newTemplateDuration, setNewTemplateDuration] = useState('30')
   const [newTemplateSubscription, setNewTemplateSubscription] = useState<'none' | 'monthly' | 'quarterly'>('none')
@@ -52,12 +49,235 @@ export default function AdminSessionsPage() {
     return addMinutesToDateTime(start, duration)
   }, [newServiceDate, newServiceTime, newServiceDuration])
 
-  async function withLoader(action: () => void, successMessage: string) {
+  const reloadCatalog = useCallback(async () => {
+    const supabase = createSupabaseClient()
+    const { categories: c, templates: t, services: s } = await loadServiceCatalog(supabase)
+    setCategories(c)
+    setTemplates(t)
+    setServices(s)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        await reloadCatalog()
+        if (!cancelled) {
+          setLoadError(null)
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setLoadError(e instanceof Error ? e.message : 'Failed to load catalog')
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [reloadCatalog])
+
+  async function createCategory() {
+    const name = newCategoryName.trim()
+    if (!name) return
     setSaving(true)
-    await new Promise((resolve) => setTimeout(resolve, 550))
-    action()
-    setSaving(false)
-    toast({ title: successMessage, description: 'Mock persistence only for now.' })
+    try {
+      const res = await fetch('/api/admin/session-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast({ title: 'Category not saved', description: payload.error ?? 'Request failed' })
+        return
+      }
+      setNewCategoryName('')
+      await reloadCatalog()
+      toast({ title: 'Category created', description: 'Saved to session_categories in Supabase.' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function createTemplate() {
+    const title = newTemplateTitle.trim()
+    const categoryId = newTemplateCategoryId.trim()
+    const durationMinutes = Number(newTemplateDuration) || 30
+    const priceGbp = Number(newTemplatePrice)
+    if (!title || !categoryId) {
+      toast({ title: 'Missing fields', description: 'Title and category are required.' })
+      return
+    }
+    if (!Number.isFinite(priceGbp) || priceGbp < 0) {
+      toast({ title: 'Invalid price', description: 'Enter a valid base price.' })
+      return
+    }
+    setSaving(true)
+    try {
+      const res = await fetch('/api/admin/session-types', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          categoryId,
+          title,
+          durationMinutes,
+          priceGbp,
+        }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast({ title: 'Template not saved', description: payload.error ?? 'Request failed' })
+        return
+      }
+      setNewTemplateTitle('')
+      setNewTemplateCategoryId('')
+      await reloadCatalog()
+      toast({ title: 'Template created', description: 'Saved to session_types in Supabase.' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function createServiceSlot() {
+    if (!newServiceTemplateId || !newServiceDate || !newServiceTime) {
+      toast({ title: 'Missing fields', description: 'Template, date, and time are required.' })
+      return
+    }
+    const template = templates.find((item) => item.id === newServiceTemplateId)
+    if (!template) return
+    const start = new Date(`${newServiceDate}T${newServiceTime}`)
+    const duration = Number(newServiceDuration) || template.defaultDurationMinutes
+    const end = new Date(start.getTime() + duration * 60_000)
+    const priceTrim = newServicePriceOverride.trim()
+    const priceOverrideGbp = priceTrim === '' ? null : Number(priceTrim)
+
+    setSaving(true)
+    try {
+      const res = await fetch('/api/admin/practice-sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionTypeId: newServiceTemplateId,
+          startsAt: start.toISOString(),
+          endsAt: end.toISOString(),
+          priceOverrideGbp: priceOverrideGbp != null && !Number.isNaN(priceOverrideGbp) ? priceOverrideGbp : null,
+          locationLabel: newServiceClinician.trim() || null,
+        }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast({ title: 'Slot not saved', description: payload.error ?? 'Request failed' })
+        return
+      }
+      await reloadCatalog()
+      toast({ title: 'Service slot created', description: 'Saved to sessions in Supabase.' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function toggleCategoryActive(category: ServiceCategory) {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/admin/session-categories/${category.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !category.isActive }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast({ title: 'Category not updated', description: payload.error ?? 'Request failed' })
+        return
+      }
+      await reloadCatalog()
+      toast({ title: 'Category updated' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function renameCategory(category: ServiceCategory) {
+    const nextName = window.prompt('Category name', category.name)?.trim()
+    if (!nextName || nextName === category.name) return
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/admin/session-categories/${category.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: nextName }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast({ title: 'Category rename failed', description: payload.error ?? 'Request failed' })
+        return
+      }
+      await reloadCatalog()
+      toast({ title: 'Category renamed' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function duplicateTemplate(templateId: string) {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/admin/session-types/${templateId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'duplicate' }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast({ title: 'Duplicate failed', description: payload.error ?? 'Request failed' })
+        return
+      }
+      await reloadCatalog()
+      toast({ title: 'Template duplicated' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function toggleTemplateActive(templateId: string, isActive: boolean) {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/admin/session-types/${templateId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !isActive }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast({ title: 'Template update failed', description: payload.error ?? 'Request failed' })
+        return
+      }
+      await reloadCatalog()
+      toast({ title: 'Template updated' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function updateServiceStatus(id: string, status: ActiveService['status']) {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/admin/practice-sessions/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast({ title: 'Service status update failed', description: payload.error ?? 'Request failed' })
+        return
+      }
+      await reloadCatalog()
+      toast({ title: `Service marked ${status}` })
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -67,6 +287,8 @@ export default function AdminSessionsPage() {
         <p className="text-sm text-muted-foreground">
           Categories, service templates, and active service scheduling in one admin workspace.
         </p>
+        {loadError ? <p className="text-xs text-destructive">Could not load catalog: {loadError}</p> : null}
+        {loading ? <p className="text-xs text-muted-foreground">Loading from Supabase…</p> : null}
       </div>
 
       <Tabs defaultValue="categories" className="space-y-4">
@@ -89,30 +311,17 @@ export default function AdminSessionsPage() {
                   onChange={(event) => setNewCategoryName(event.target.value)}
                   placeholder="Add category name"
                 />
-                <Button
-                  disabled={saving || !newCategoryName.trim()}
-                  onClick={() =>
-                    void withLoader(() => {
-                      setCategories((prev) => [
-                        ...prev,
-                        {
-                          id: `cat-${Date.now()}`,
-                          name: newCategoryName.trim(),
-                          description: 'New category',
-                          isActive: true,
-                        },
-                      ])
-                      setNewCategoryName('')
-                    }, 'Category created')
-                  }
-                >
+                <Button disabled={saving || !newCategoryName.trim() || loading} onClick={() => void createCategory()}>
                   {saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Plus className="mr-2 size-4" />}
                   Create
                 </Button>
               </div>
               <div className="grid gap-3">
                 {categories.map((category) => (
-                  <div key={category.id} className="flex flex-col gap-2 rounded-lg border border-border/70 p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div
+                    key={category.id}
+                    className="flex flex-col gap-2 rounded-lg border border-border/70 p-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
                     <div>
                       <p className="font-medium">{category.name}</p>
                       <p className="text-xs text-muted-foreground">{category.description}</p>
@@ -121,17 +330,14 @@ export default function AdminSessionsPage() {
                       <Badge variant={category.isActive ? 'secondary' : 'outline'}>
                         {category.isActive ? 'Active' : 'Archived'}
                       </Badge>
-                      <Button size="sm" variant="outline" onClick={() => toast({ title: 'Edit category', description: 'Edit UI to be expanded in next pass.' })}>
+                      <Button size="sm" variant="outline" disabled={saving} onClick={() => void renameCategory(category)}>
                         Edit
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() =>
-                          setCategories((prev) =>
-                            prev.map((item) => (item.id === category.id ? { ...item, isActive: !item.isActive } : item)),
-                          )
-                        }
+                        disabled={saving}
+                        onClick={() => void toggleCategoryActive(category)}
                       >
                         {category.isActive ? 'Archive' : 'Restore'}
                       </Button>
@@ -152,13 +358,13 @@ export default function AdminSessionsPage() {
             <CardContent className="space-y-4">
               <div className="grid gap-2 md:grid-cols-2">
                 <Input value={newTemplateTitle} onChange={(event) => setNewTemplateTitle(event.target.value)} placeholder="Service title" />
-                <Select value={newTemplateCategory} onValueChange={setNewTemplateCategory}>
+                <Select value={newTemplateCategoryId} onValueChange={setNewTemplateCategoryId}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.name}>
+                      <SelectItem key={category.id} value={category.id}>
                         {category.name}
                       </SelectItem>
                     ))}
@@ -187,25 +393,8 @@ export default function AdminSessionsPage() {
                 </Select>
               </div>
               <Button
-                disabled={saving || !newTemplateTitle || !newTemplateCategory}
-                onClick={() =>
-                  void withLoader(() => {
-                    setTemplates((prev) => [
-                      ...prev,
-                      {
-                        id: `st-${Date.now()}`,
-                        title: newTemplateTitle.trim(),
-                        category: newTemplateCategory,
-                        basePrice: Number(newTemplatePrice) || 0,
-                        subscription: newTemplateSubscription,
-                        defaultDurationMinutes: Number(newTemplateDuration) || 30,
-                        isActive: true,
-                      },
-                    ])
-                    setNewTemplateTitle('')
-                    setNewTemplateCategory('')
-                  }, 'Template created')
-                }
+                disabled={saving || !newTemplateTitle || !newTemplateCategoryId || loading}
+                onClick={() => void createTemplate()}
               >
                 {saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Plus className="mr-2 size-4" />}
                 Add template
@@ -225,17 +414,14 @@ export default function AdminSessionsPage() {
                       {template.subscription === 'none' ? 'No subscription' : `${template.subscription} plan`}
                     </p>
                     <div className="mt-3 flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => toast({ title: 'Template duplicated', description: 'Mock duplicate action complete.' })}>
+                      <Button size="sm" variant="outline" disabled={saving} onClick={() => void duplicateTemplate(template.id)}>
                         Duplicate
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() =>
-                          setTemplates((prev) =>
-                            prev.map((item) => (item.id === template.id ? { ...item, isActive: !item.isActive } : item)),
-                          )
-                        }
+                        disabled={saving}
+                        onClick={() => void toggleTemplateActive(template.id, template.isActive)}
                       >
                         {template.isActive ? 'Archive' : 'Restore'}
                       </Button>
@@ -311,30 +497,7 @@ export default function AdminSessionsPage() {
                 </p>
               </div>
 
-              <Button
-                disabled={saving || !newServiceTemplateId || !newServiceDate || !newServiceTime}
-                onClick={() =>
-                  void withLoader(() => {
-                    const template = templates.find((item) => item.id === newServiceTemplateId)
-                    if (!template) return
-                    const startsAt = `${newServiceDate}T${newServiceTime}`
-                    const duration = Number(newServiceDuration) || template.defaultDurationMinutes
-                    const endsAt = addMinutesToDateTime(startsAt, duration)
-                    setServices((prev) => [
-                      ...prev,
-                      {
-                        id: `srv-${Date.now()}`,
-                        templateTitle: template.title,
-                        clinician: newServiceClinician,
-                        startsAt,
-                        endsAt,
-                        priceOverride: newServicePriceOverride.trim() ? Number(newServicePriceOverride) : null,
-                        status: 'scheduled',
-                      },
-                    ])
-                  }, 'Service slot created')
-                }
-              >
+              <Button disabled={saving || !newServiceTemplateId || !newServiceDate || !newServiceTime || loading} onClick={() => void createServiceSlot()}>
                 {saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Plus className="mr-2 size-4" />}
                 Create service slot
               </Button>
@@ -350,13 +513,13 @@ export default function AdminSessionsPage() {
                       {service.clinician} · {service.startsAt.replace('T', ' ')} to {service.endsAt.replace('T', ' ')}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {service.priceOverride ? `Price override: GBP ${service.priceOverride}` : 'Using template price'}
+                      {service.priceOverride != null ? `Price override: GBP ${service.priceOverride}` : 'Using template price'}
                     </p>
                     <div className="mt-3 flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => setServices((prev) => prev.map((row) => (row.id === service.id ? { ...row, status: 'cancelled' } : row)))}>
+                      <Button size="sm" variant="outline" disabled={saving} onClick={() => void updateServiceStatus(service.id, 'cancelled')}>
                         Cancel
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => setServices((prev) => prev.map((row) => (row.id === service.id ? { ...row, status: 'completed' } : row)))}>
+                      <Button size="sm" variant="outline" disabled={saving} onClick={() => void updateServiceStatus(service.id, 'completed')}>
                         Attend
                       </Button>
                     </div>

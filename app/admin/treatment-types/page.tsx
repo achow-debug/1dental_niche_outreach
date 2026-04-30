@@ -1,17 +1,10 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Loader2, MoreHorizontal, Plus, Search } from 'lucide-react'
-import {
-  ACTIVE_SERVICES,
-  SERVICE_CATEGORIES,
-  SERVICE_TEMPLATES,
-  TREATMENT_TYPES,
-  type ActiveService,
-  type ServiceCategory,
-  type ServiceTemplate,
-  type TreatmentTypeRow,
-} from '@/lib/mocks/admin'
+import { loadServiceCatalog } from '@/lib/admin/service-catalog'
+import { createClient as createSupabaseClient } from '@/lib/supabase/client'
+import type { ActiveService, ServiceCategory, ServiceTemplate, TreatmentTypeRow } from '@/lib/mocks/admin'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -64,10 +57,12 @@ function addMinutesToDateTime(iso: string, minutes: number) {
 }
 
 export default function TreatmentTypesPage() {
-  const [rows, setRows] = useState<TreatmentTypeRow[]>(TREATMENT_TYPES)
-  const [categories, setCategories] = useState<ServiceCategory[]>(SERVICE_CATEGORIES)
-  const [templates, setTemplates] = useState<ServiceTemplate[]>(SERVICE_TEMPLATES)
-  const [services, setServices] = useState<ActiveService[]>(ACTIVE_SERVICES)
+  const [rows, setRows] = useState<TreatmentTypeRow[]>([])
+  const [categories, setCategories] = useState<ServiceCategory[]>([])
+  const [templates, setTemplates] = useState<ServiceTemplate[]>([])
+  const [services, setServices] = useState<ActiveService[]>([])
+  const [catalogLoading, setCatalogLoading] = useState(true)
+  const [catalogError, setCatalogError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived'>('all')
   const [sortBy, setSortBy] = useState<'name' | 'updated'>('updated')
@@ -83,7 +78,7 @@ export default function TreatmentTypesPage() {
   const [typeSubscription, setTypeSubscription] = useState<'none' | 'monthly' | 'quarterly'>('none')
 
   const [newTemplateTitle, setNewTemplateTitle] = useState('')
-  const [newTemplateCategory, setNewTemplateCategory] = useState('')
+  const [newTemplateCategoryId, setNewTemplateCategoryId] = useState('')
   const [newTemplatePrice, setNewTemplatePrice] = useState('95')
   const [newTemplateDuration, setNewTemplateDuration] = useState('30')
   const [newTemplateSubscription, setNewTemplateSubscription] = useState<'none' | 'monthly' | 'quarterly'>('none')
@@ -121,19 +116,33 @@ export default function TreatmentTypesPage() {
     return addMinutesToDateTime(startIso, duration)
   }, [newServiceDate, newServiceTime, newServiceDuration])
 
+  const reloadCatalog = useCallback(async () => {
+    const supabase = createSupabaseClient()
+    const { categories: c, templates: t, services: s, treatmentTypeRows } = await loadServiceCatalog(supabase)
+    setCategories(c)
+    setTemplates(t)
+    setServices(s)
+    setRows(treatmentTypeRows)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        await reloadCatalog()
+        if (!cancelled) setCatalogError(null)
+      } catch (e) {
+        if (!cancelled) setCatalogError(e instanceof Error ? e.message : 'Failed to load catalog')
+      } finally {
+        if (!cancelled) setCatalogLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [reloadCatalog])
+
   const editingType = useMemo(() => rows.find((row) => row.id === editingTypeId) ?? null, [rows, editingTypeId])
-
-  function runAction(message: string) {
-    toast({ title: message, description: 'Mock action only. API wiring comes next.' })
-  }
-
-  async function withLoader(action: () => void, successMessage: string) {
-    setSaving(true)
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    action()
-    setSaving(false)
-    toast({ title: successMessage, description: 'Saved in mock state for now.' })
-  }
 
   function resetTypeForm() {
     setTypeName('')
@@ -143,23 +152,51 @@ export default function TreatmentTypesPage() {
     setTypeSubscription('none')
   }
 
-  function createTreatmentType() {
-    void withLoader(() => {
-      setRows((prev) => [
-        {
-          id: `tt-${Date.now()}`,
-          name: typeName.trim(),
-          category: typeCategory,
-          durationMinutes: Number(typeDuration) || 30,
-          price: Number(typePrice) || 0,
-          status: 'active',
-          updatedAt: new Date().toISOString().slice(0, 10),
-        },
-        ...prev,
-      ])
+  async function createTreatmentType() {
+    const title = typeName.trim()
+    const catName = typeCategory.trim()
+    const durationMinutes = Number(typeDuration) || 30
+    const priceGbp = Number(typePrice)
+    if (!title || !catName) {
+      toast({ title: 'Missing fields', description: 'Name and category are required.' })
+      return
+    }
+    if (!Number.isFinite(priceGbp) || priceGbp < 0) {
+      toast({ title: 'Invalid price', description: 'Enter a valid price.' })
+      return
+    }
+    const cat = categories.find((c) => c.name.toLowerCase() === catName.toLowerCase())
+    if (!cat) {
+      toast({
+        title: 'Unknown category',
+        description: 'Use a category name that exists in Supabase (see reusable templates tab), or create one under Catalog management (/admin/sessions).',
+      })
+      return
+    }
+    setSaving(true)
+    try {
+      const res = await fetch('/api/admin/session-types', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          categoryId: cat.id,
+          title,
+          durationMinutes,
+          priceGbp,
+        }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast({ title: 'Not saved', description: payload.error ?? 'Request failed' })
+        return
+      }
+      await reloadCatalog()
       setOpenCreateType(false)
       resetTypeForm()
-    }, 'Treatment type created')
+      toast({ title: 'Treatment type created', description: 'Saved to session_types in Supabase.' })
+    } finally {
+      setSaving(false)
+    }
   }
 
   function startEdit(row: TreatmentTypeRow) {
@@ -171,37 +208,137 @@ export default function TreatmentTypesPage() {
     setTypeSubscription('none')
   }
 
-  function saveEdit() {
+  async function saveEdit() {
     if (!editingTypeId) return
-    void withLoader(() => {
-      setRows((prev) =>
-        prev.map((row) =>
-          row.id === editingTypeId
-            ? {
-                ...row,
-                name: typeName.trim(),
-                category: typeCategory,
-                durationMinutes: Number(typeDuration) || row.durationMinutes,
-                price: Number(typePrice) || row.price,
-                updatedAt: new Date().toISOString().slice(0, 10),
-              }
-            : row,
-        ),
-      )
+    const cat = categories.find((c) => c.name.toLowerCase() === typeCategory.trim().toLowerCase())
+    if (!cat) {
+      toast({ title: 'Unknown category', description: 'Pick a category that exists.' })
+      return
+    }
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/admin/session-types/${editingTypeId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: typeName.trim(),
+          categoryId: cat.id,
+          durationMinutes: Number(typeDuration) || 30,
+          priceGbp: Number(typePrice) || 0,
+        }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast({ title: 'Update failed', description: payload.error ?? 'Request failed' })
+        return
+      }
+      await reloadCatalog()
       setEditingTypeId(null)
       resetTypeForm()
-    }, 'Treatment type updated')
+      toast({ title: 'Treatment type updated' })
+    } finally {
+      setSaving(false)
+    }
   }
 
-  function archiveRow(id: string) {
-    setRows((prev) =>
-      prev.map((row) =>
-        row.id === id
-          ? { ...row, status: row.status === 'active' ? 'archived' : 'active', updatedAt: new Date().toISOString().slice(0, 10) }
-          : row,
-      ),
-    )
-    runAction('Treatment type status updated')
+  async function archiveRow(id: string, isActive: boolean) {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/admin/session-types/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !isActive }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast({ title: 'Status update failed', description: payload.error ?? 'Request failed' })
+        return
+      }
+      await reloadCatalog()
+      toast({ title: 'Treatment type status updated' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function duplicateType(id: string) {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/admin/session-types/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'duplicate' }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast({ title: 'Duplicate failed', description: payload.error ?? 'Request failed' })
+        return
+      }
+      await reloadCatalog()
+      toast({ title: 'Treatment type duplicated' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function toggleTemplateActive(templateId: string, isActive: boolean) {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/admin/session-types/${templateId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !isActive }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast({ title: 'Template update failed', description: payload.error ?? 'Request failed' })
+        return
+      }
+      await reloadCatalog()
+      toast({ title: 'Template updated' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function duplicateTemplate(id: string) {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/admin/session-types/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'duplicate' }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast({ title: 'Template duplicate failed', description: payload.error ?? 'Request failed' })
+        return
+      }
+      await reloadCatalog()
+      toast({ title: 'Template duplicated' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function updateServiceStatus(id: string, status: ActiveService['status']) {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/admin/practice-sessions/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast({ title: 'Slot update failed', description: payload.error ?? 'Request failed' })
+        return
+      }
+      await reloadCatalog()
+      toast({ title: `Slot marked ${status}` })
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -212,6 +349,8 @@ export default function TreatmentTypesPage() {
           <p className="text-sm text-muted-foreground">
             Merged catalog + treatment types workspace with clear form settings and working actions.
           </p>
+          {catalogError ? <p className="text-xs text-destructive">Could not load catalog: {catalogError}</p> : null}
+          {catalogLoading ? <p className="text-xs text-muted-foreground">Loading catalog from Supabase…</p> : null}
         </div>
         <Button className="w-full sm:w-auto" onClick={() => setOpenCreateType(true)}>
           <Plus className="mr-2 size-4" />
@@ -290,7 +429,7 @@ export default function TreatmentTypesPage() {
                       <Button size="sm" variant="outline" onClick={() => startEdit(row)}>
                         Edit
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => archiveRow(row.id)}>
+                      <Button size="sm" variant="outline" disabled={saving} onClick={() => void archiveRow(row.id, row.status === 'active')}>
                         {row.status === 'active' ? 'Archive' : 'Restore'}
                       </Button>
                     </div>
@@ -329,20 +468,7 @@ export default function TreatmentTypesPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onSelect={() => startEdit(row)}>Edit</DropdownMenuItem>
-                              <DropdownMenuItem
-                                onSelect={() => {
-                                  setRows((prev) => [
-                                    {
-                                      ...row,
-                                      id: `tt-${Date.now()}`,
-                                      name: `${row.name} (copy)`,
-                                      updatedAt: new Date().toISOString().slice(0, 10),
-                                    },
-                                    ...prev,
-                                  ])
-                                  runAction('Treatment type duplicated')
-                                }}
-                              >
+                              <DropdownMenuItem onSelect={() => void duplicateType(row.id)}>
                                 Duplicate
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
@@ -366,7 +492,7 @@ export default function TreatmentTypesPage() {
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => archiveRow(row.id)}>
+                                    <AlertDialogAction onClick={() => void archiveRow(row.id, row.status === 'active')}>
                                       Confirm
                                     </AlertDialogAction>
                                   </AlertDialogFooter>
@@ -432,13 +558,13 @@ export default function TreatmentTypesPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="template-category">Service category</Label>
-                  <Select value={newTemplateCategory} onValueChange={setNewTemplateCategory}>
+                  <Select value={newTemplateCategoryId} onValueChange={setNewTemplateCategoryId}>
                     <SelectTrigger id="template-category" className="w-full">
                       <SelectValue placeholder="Select category for this template" />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.name}>
+                        <SelectItem key={category.id} value={category.id}>
                           {category.name}
                         </SelectItem>
                       ))}
@@ -486,24 +612,38 @@ export default function TreatmentTypesPage() {
               </div>
 
               <Button
-                disabled={saving || !newTemplateTitle.trim() || !newTemplateCategory}
+                disabled={saving || catalogLoading || !newTemplateTitle.trim() || !newTemplateCategoryId}
                 onClick={() =>
-                  void withLoader(() => {
-                    setTemplates((prev) => [
-                      ...prev,
-                      {
-                        id: `st-${Date.now()}`,
-                        title: newTemplateTitle.trim(),
-                        category: newTemplateCategory,
-                        basePrice: Number(newTemplatePrice) || 0,
-                        subscription: newTemplateSubscription,
-                        defaultDurationMinutes: Number(newTemplateDuration) || 30,
-                        isActive: true,
-                      },
-                    ])
-                    setNewTemplateTitle('')
-                    setNewTemplateCategory('')
-                  }, 'Service template created')
+                  void (async () => {
+                    const title = newTemplateTitle.trim()
+                    const categoryId = newTemplateCategoryId.trim()
+                    const durationMinutes = Number(newTemplateDuration) || 30
+                    const priceGbp = Number(newTemplatePrice)
+                    if (!title || !categoryId) return
+                    if (!Number.isFinite(priceGbp) || priceGbp < 0) {
+                      toast({ title: 'Invalid price', description: 'Enter a valid base price.' })
+                      return
+                    }
+                    setSaving(true)
+                    try {
+                      const res = await fetch('/api/admin/session-types', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ categoryId, title, durationMinutes, priceGbp }),
+                      })
+                      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+                      if (!res.ok) {
+                        toast({ title: 'Template not saved', description: payload.error ?? 'Request failed' })
+                        return
+                      }
+                      setNewTemplateTitle('')
+                      setNewTemplateCategoryId('')
+                      await reloadCatalog()
+                      toast({ title: 'Service template created', description: 'Saved to session_types in Supabase.' })
+                    } finally {
+                      setSaving(false)
+                    }
+                  })()
                 }
               >
                 {saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Plus className="mr-2 size-4" />}
@@ -528,28 +668,16 @@ export default function TreatmentTypesPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => {
-                          setTemplates((prev) => [
-                            {
-                              ...template,
-                              id: `st-${Date.now()}`,
-                              title: `${template.title} (copy)`,
-                            },
-                            ...prev,
-                          ])
-                          runAction('Template duplicated')
-                        }}
+                        disabled={saving}
+                        onClick={() => void duplicateTemplate(template.id)}
                       >
                         Duplicate
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() =>
-                          setTemplates((prev) =>
-                            prev.map((item) => (item.id === template.id ? { ...item, isActive: !item.isActive } : item)),
-                          )
-                        }
+                        disabled={saving}
+                        onClick={() => void toggleTemplateActive(template.id, template.isActive)}
                       >
                         {template.isActive ? 'Archive' : 'Restore'}
                       </Button>
@@ -631,27 +759,40 @@ export default function TreatmentTypesPage() {
               </div>
 
               <Button
-                disabled={saving || !newServiceTemplateId || !newServiceDate || !newServiceTime}
+                disabled={saving || catalogLoading || !newServiceTemplateId || !newServiceDate || !newServiceTime}
                 onClick={() =>
-                  void withLoader(() => {
+                  void (async () => {
                     const template = templates.find((item) => item.id === newServiceTemplateId)
                     if (!template) return
-                    const startsAt = `${newServiceDate}T${newServiceTime}`
+                    const start = new Date(`${newServiceDate}T${newServiceTime}`)
                     const duration = Number(newServiceDuration) || template.defaultDurationMinutes
-                    const endsAt = addMinutesToDateTime(startsAt, duration)
-                    setServices((prev) => [
-                      {
-                        id: `srv-${Date.now()}`,
-                        templateTitle: template.title,
-                        clinician: newServiceClinician,
-                        startsAt,
-                        endsAt,
-                        priceOverride: newServicePriceOverride.trim() ? Number(newServicePriceOverride) : null,
-                        status: 'scheduled',
-                      },
-                      ...prev,
-                    ])
-                  }, 'Service slot created')
+                    const end = new Date(start.getTime() + duration * 60_000)
+                    const priceTrim = newServicePriceOverride.trim()
+                    const priceOverrideGbp = priceTrim === '' ? null : Number(priceTrim)
+                    setSaving(true)
+                    try {
+                      const res = await fetch('/api/admin/practice-sessions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          sessionTypeId: newServiceTemplateId,
+                          startsAt: start.toISOString(),
+                          endsAt: end.toISOString(),
+                          priceOverrideGbp: priceOverrideGbp != null && !Number.isNaN(priceOverrideGbp) ? priceOverrideGbp : null,
+                          locationLabel: newServiceClinician.trim() || null,
+                        }),
+                      })
+                      const payload = (await res.json().catch(() => ({}))) as { error?: string }
+                      if (!res.ok) {
+                        toast({ title: 'Slot not saved', description: payload.error ?? 'Request failed' })
+                        return
+                      }
+                      await reloadCatalog()
+                      toast({ title: 'Service slot created', description: 'Saved to sessions in Supabase.' })
+                    } finally {
+                      setSaving(false)
+                    }
+                  })()
                 }
               >
                 {saving ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Plus className="mr-2 size-4" />}
@@ -675,22 +816,16 @@ export default function TreatmentTypesPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() =>
-                          setServices((prev) =>
-                            prev.map((row) => (row.id === service.id ? { ...row, status: 'cancelled' } : row)),
-                          )
-                        }
+                        disabled={saving}
+                        onClick={() => void updateServiceStatus(service.id, 'cancelled')}
                       >
                         Cancel
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() =>
-                          setServices((prev) =>
-                            prev.map((row) => (row.id === service.id ? { ...row, status: 'completed' } : row)),
-                          )
-                        }
+                        disabled={saving}
+                        onClick={() => void updateServiceStatus(service.id, 'completed')}
                       >
                         Attend
                       </Button>

@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { MoreHorizontal, Plus, Search, SlidersHorizontal } from 'lucide-react'
-import { BOOKINGS, type BookingRow } from '@/lib/mocks/admin'
+import { createClient as createSupabaseClient } from '@/lib/supabase/client'
+import type { BookingRow } from '@/lib/mocks/admin'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   Table,
@@ -37,9 +39,13 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 const PAGE_SIZE = 6
-type StatusFilter = 'all' | 'pending' | 'confirmed' | 'cancelled' | 'no_show'
+type StatusFilter = 'all' | 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
+
+type ClientOption = { id: string; label: string }
+type SessionTypeOption = { id: string; title: string; priceGbp: number }
 type DatePreset = 'all' | 'today' | 'next_7_days' | 'next_30_days' | 'this_month' | 'custom'
 type SortField = 'clientName' | 'treatmentType' | 'date' | 'price' | 'status'
 type SortDirection = 'asc' | 'desc'
@@ -56,10 +62,30 @@ function endOfDay(date: Date) {
   return value
 }
 
+function toDateInputValue(value: Date) {
+  const year = value.getFullYear()
+  const month = String(value.getMonth() + 1).padStart(2, '0')
+  const day = String(value.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function toTimeInputValue(value: Date) {
+  const hours = String(value.getHours()).padStart(2, '0')
+  const minutes = String(value.getMinutes()).padStart(2, '0')
+  return `${hours}:${minutes}`
+}
+
 export default function BookingsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [rows, setRows] = useState<BookingRow[]>(BOOKINGS)
+  const [rows, setRows] = useState<BookingRow[]>([])
+  const [loadingBookings, setLoadingBookings] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [clientOptions, setClientOptions] = useState<ClientOption[]>([])
+  const [sessionTypeOptions, setSessionTypeOptions] = useState<SessionTypeOption[]>([])
+  const [bookingUserId, setBookingUserId] = useState('')
+  const [bookingSessionTypeId, setBookingSessionTypeId] = useState('')
+  const [creatingBooking, setCreatingBooking] = useState(false)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [treatmentFilter, setTreatmentFilter] = useState('all')
@@ -70,14 +96,13 @@ export default function BookingsPage() {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [page, setPage] = useState(1)
   const [filtersOpen, setFiltersOpen] = useState(false)
-  const [selectedBookingId, setSelectedBookingId] = useState<string>(BOOKINGS[0]?.id ?? '')
+  const [selectedBookingId, setSelectedBookingId] = useState<string>('')
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
-  const [newClientName, setNewClientName] = useState('')
-  const [newTreatmentType, setNewTreatmentType] = useState('')
   const [newDate, setNewDate] = useState('')
   const [newTime, setNewTime] = useState('')
   const [newPrice, setNewPrice] = useState('')
+  const [saveFeedback, setSaveFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   const treatmentOptions = useMemo(
     () => Array.from(new Set(rows.map((row) => row.treatmentType))).sort((a, b) => a.localeCompare(b)),
@@ -148,15 +173,158 @@ export default function BookingsPage() {
     }
   }, [filtered, selected])
 
-  useEffect(() => {
-    const clientName = searchParams.get('clientName')
-    if (!clientName) return
-    const matchedClient = rows.find((row) => row.clientName.toLowerCase().includes(clientName.toLowerCase()))
-    if (matchedClient) {
-      setSearch(matchedClient.clientName)
-      setSelectedBookingId(matchedClient.id)
+  const loadBookings = useCallback(async () => {
+    const res = await fetch('/api/admin/bookings')
+    const payload = (await res.json().catch(() => ({}))) as { bookings?: BookingRow[]; error?: string }
+    if (!res.ok) {
+      throw new Error(payload.error ?? 'Failed to load bookings')
     }
-  }, [rows, searchParams])
+    setRows(payload.bookings ?? [])
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        await loadBookings()
+        if (!cancelled) setLoadError(null)
+      } catch (e) {
+        if (!cancelled) setLoadError(e instanceof Error ? e.message : 'Failed to load bookings')
+      } finally {
+        if (!cancelled) setLoadingBookings(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [loadBookings])
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      const supabase = createSupabaseClient()
+      let { data: profiles, error: pErr } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, full_name, email')
+        .in('role', ['user', 'client'])
+        .order('created_at', { ascending: false })
+
+      if (pErr) {
+        const message = (pErr.message ?? '').toLowerCase()
+        if (message.includes('column profiles.first_name does not exist') || message.includes('column profiles.last_name does not exist')) {
+          const fallback = await supabase
+            .from('profiles')
+            .select('id, full_name, email')
+            .in('role', ['user', 'client'])
+            .order('created_at', { ascending: false })
+          profiles = fallback.data
+          pErr = fallback.error
+        }
+      }
+
+      if (pErr) {
+        const message = (pErr.message ?? '').toLowerCase()
+        if (message.includes('column profiles.email does not exist')) {
+          const fallback = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('role', ['user', 'client'])
+            .order('created_at', { ascending: false })
+          profiles = fallback.data
+          pErr = fallback.error
+        }
+      }
+
+      if (pErr || cancelled) return
+
+      const opts: ClientOption[] = (profiles ?? []).map((p) => {
+        const r = p as {
+          id: string
+          first_name: string | null
+          last_name: string | null
+          full_name: string | null
+          email: string | null
+        }
+        const parts = [r.first_name?.trim(), r.last_name?.trim()].filter(Boolean)
+        const name = parts.length ? parts.join(' ') : r.full_name?.trim() || r.email?.trim() || 'Client'
+        const label = r.email?.trim() ? `${name} (${r.email})` : name
+        return { id: r.id, label }
+      })
+      setClientOptions(opts)
+
+      let { data: types, error: tErr } = await supabase
+        .from('session_types')
+        .select('id, title, price_cents')
+        .is('deleted_at', null)
+        .eq('is_active', true)
+        .order('title', { ascending: true })
+
+      if (tErr) {
+        const message = (tErr.message ?? '').toLowerCase()
+        if (message.includes('column session_types.deleted_at does not exist')) {
+          const fallback = await supabase
+            .from('session_types')
+            .select('id, title, price_cents')
+            .eq('is_active', true)
+            .order('title', { ascending: true })
+          types = fallback.data
+          tErr = fallback.error
+        }
+      }
+
+      if (tErr || cancelled) return
+      setSessionTypeOptions(
+        (types ?? []).map((t) => ({
+          id: t.id as string,
+          title: t.title as string,
+          priceGbp: Number(((t as { price_cents?: number | null }).price_cents ?? 0) / 100),
+        })),
+      )
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    const clientId = searchParams.get('clientId')
+    const clientName = searchParams.get('clientName')
+    if (clientId) {
+      setBookingUserId(clientId)
+      setCreateDialogOpen(true)
+      return
+    }
+    if (!clientName) return
+    const match = clientOptions.find((c) => c.label.toLowerCase().includes(clientName.toLowerCase()))
+    if (match) {
+      setBookingUserId(match.id)
+      setCreateDialogOpen(true)
+    }
+  }, [clientOptions, searchParams])
+
+  useEffect(() => {
+    if (!createDialogOpen) return
+    if (!newDate.trim()) {
+      setNewDate(toDateInputValue(new Date()))
+    }
+    if (!newTime.trim()) {
+      const now = new Date()
+      const rounded = new Date(now.getTime())
+      rounded.setSeconds(0, 0)
+      // Default to the next half-hour slot so the field is always valid.
+      const minutes = rounded.getMinutes()
+      rounded.setMinutes(minutes <= 30 ? 30 : 60)
+      setNewTime(toTimeInputValue(rounded))
+    }
+  }, [createDialogOpen, newDate, newTime])
+
+  useEffect(() => {
+    if (!bookingSessionTypeId) return
+    if (newPrice.trim() !== '') return
+    const selectedType = sessionTypeOptions.find((option) => option.id === bookingSessionTypeId)
+    if (!selectedType) return
+    setNewPrice(selectedType.priceGbp.toFixed(2))
+  }, [bookingSessionTypeId, sessionTypeOptions, newPrice])
 
   const totalPages = Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
@@ -164,50 +332,89 @@ export default function BookingsPage() {
   const currentRows = sortedRows.slice(start, start + PAGE_SIZE)
 
   function runAction(message: string) {
-    toast({ title: message, description: 'Mock action only. API wiring comes next.' })
+    toast({ title: message })
   }
 
-  function updateStatus(id: string, status: BookingRow['status']) {
+  async function updateStatus(id: string, status: BookingRow['status']) {
+    const res = await fetch(`/api/admin/bookings/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    })
+    const payload = (await res.json().catch(() => ({}))) as { error?: string }
+    if (!res.ok) {
+      toast({ title: 'Update failed', description: payload.error ?? 'Request failed' })
+      return
+    }
     setRows((prev) => prev.map((row) => (row.id === id ? { ...row, status } : row)))
-    runAction(`Booking marked ${status.replace('_', ' ')}`)
+    toast({ title: `Booking marked ${status.replace('_', ' ')}` })
   }
 
-  function createBooking() {
-    const clientName = newClientName.trim()
-    const treatmentType = newTreatmentType.trim()
-    const date = newDate.trim()
-    const time = newTime.trim()
-    const price = Number(newPrice)
+  async function createBooking() {
+    const selectedType = sessionTypeOptions.find((option) => option.id === bookingSessionTypeId)
+    const trimmedPrice = newPrice.trim()
+    const fallbackPrice = selectedType?.priceGbp ?? 0
+    const price = trimmedPrice === '' ? fallbackPrice : Number(trimmedPrice)
 
-    if (!clientName || !treatmentType || !date || !time || Number.isNaN(price)) {
+    const missingFields: string[] = []
+    if (!bookingUserId) missingFields.push('client')
+    if (!bookingSessionTypeId) missingFields.push('treatment template')
+    if (!newDate.trim()) missingFields.push('date')
+    if (!newTime.trim()) missingFields.push('time')
+    if (Number.isNaN(price)) missingFields.push('price')
+
+    if (missingFields.length > 0) {
+      const message = `Missing required fields: ${missingFields.join(', ')}.`
+      setSaveFeedback({
+        type: 'error',
+        message,
+      })
       toast({
         title: 'Missing booking details',
-        description: 'Client, treatment, date, time, and price are required.',
+        description: message,
       })
       return
     }
 
-    const created: BookingRow = {
-      id: `bk-${crypto.randomUUID().slice(0, 8)}`,
-      clientName,
-      treatmentType,
-      date,
-      time,
-      price,
-      status: 'pending',
+    const startsAt = new Date(`${newDate.trim()}T${newTime.trim()}`)
+    if (Number.isNaN(startsAt.getTime())) {
+      setSaveFeedback({ type: 'error', message: 'Check the date and time fields.' })
+      toast({ title: 'Invalid date or time', description: 'Check the date and time fields.' })
+      return
     }
 
-    setRows((prev) => [created, ...prev])
-    setSelectedBookingId(created.id)
-    setCreateDialogOpen(false)
-    setNewClientName('')
-    setNewTreatmentType('')
+    setCreatingBooking(true)
+    setSaveFeedback(null)
+    const res = await fetch('/api/admin/bookings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: bookingUserId,
+        sessionTypeId: bookingSessionTypeId,
+        startsAt: startsAt.toISOString(),
+        priceGbp: price,
+      }),
+    })
+    const payload = (await res.json().catch(() => ({}))) as { error?: string; bookingId?: string }
+    setCreatingBooking(false)
+
+    if (!res.ok) {
+      setSaveFeedback({ type: 'error', message: payload.error ?? 'Request failed' })
+      toast({ title: 'Booking not saved', description: payload.error ?? 'Request failed' })
+      return
+    }
+
+    setBookingUserId('')
+    setBookingSessionTypeId('')
     setNewDate('')
     setNewTime('')
     setNewPrice('')
+    setSaveFeedback({ type: 'success', message: 'Booking was saved successfully in Supabase (sessions + bookings).' })
+    await loadBookings()
+    if (payload.bookingId) setSelectedBookingId(payload.bookingId)
     toast({
-      title: 'Booking created',
-      description: 'New booking was added to the ledger.',
+      title: 'Input acknowledged',
+      description: 'Booking was saved successfully in Supabase (sessions + bookings).',
     })
   }
 
@@ -244,8 +451,12 @@ export default function BookingsPage() {
             <CardDescription>
               Master feed with lifecycle management and relation-aware actions.
             </CardDescription>
+            {loadError ? <p className="text-xs text-destructive">Error loading bookings: {loadError}</p> : null}
           </CardHeader>
           <CardContent className="space-y-4">
+          {loadingBookings ? (
+            <div className="rounded-lg border border-border/70 p-3 text-sm text-muted-foreground">Loading bookings…</div>
+          ) : null}
           <div className="flex flex-col gap-2 sm:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
@@ -282,6 +493,7 @@ export default function BookingsPage() {
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="confirmed">Confirmed</SelectItem>
                     <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
                     <SelectItem value="no_show">No show</SelectItem>
                   </SelectContent>
                 </Select>
@@ -609,15 +821,51 @@ export default function BookingsPage() {
         </Card>
       </div>
 
-      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+      <Dialog
+        open={createDialogOpen}
+        onOpenChange={(open) => {
+          setCreateDialogOpen(open)
+          if (!open) setSaveFeedback(null)
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Create booking</DialogTitle>
-            <DialogDescription>Add a booking to the operations ledger.</DialogDescription>
+            <DialogDescription>
+              Creates a calendar session and a booking for the selected client profile (sessions and bookings tables).
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 py-1">
-            <Input value={newClientName} onChange={(event) => setNewClientName(event.target.value)} placeholder="Client name" />
-            <Input value={newTreatmentType} onChange={(event) => setNewTreatmentType(event.target.value)} placeholder="Treatment type" />
+            <div className="space-y-2">
+              <Label>Client</Label>
+              <Select value={bookingUserId || undefined} onValueChange={setBookingUserId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select client profile" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clientOptions.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Treatment (session type)</Label>
+              <Select value={bookingSessionTypeId || undefined} onValueChange={setBookingSessionTypeId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select session type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sessionTypeOptions.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <Input type="date" value={newDate} onChange={(event) => setNewDate(event.target.value)} />
               <Input type="time" value={newTime} onChange={(event) => setNewTime(event.target.value)} />
@@ -628,14 +876,22 @@ export default function BookingsPage() {
               step="0.01"
               value={newPrice}
               onChange={(event) => setNewPrice(event.target.value)}
-              placeholder="Price"
+              placeholder="Price (GBP)"
             />
+            {saveFeedback ? (
+              <Alert variant={saveFeedback.type === 'error' ? 'destructive' : 'default'}>
+                <AlertTitle>{saveFeedback.type === 'success' ? 'Successfully saved' : 'Error'}</AlertTitle>
+                <AlertDescription>{saveFeedback.message}</AlertDescription>
+              </Alert>
+            ) : null}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)} disabled={creatingBooking}>
               Cancel
             </Button>
-            <Button onClick={createBooking}>Create booking</Button>
+            <Button onClick={() => void createBooking()} disabled={creatingBooking}>
+              {creatingBooking ? 'Saving…' : 'Create booking'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

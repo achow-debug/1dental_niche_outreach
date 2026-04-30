@@ -33,6 +33,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 const PAGE_SIZE = 5
 
@@ -56,7 +57,7 @@ function toClientRow(profile: ProfileListItem): ClientRow {
     id: profile.id,
     name: fullName || 'Unnamed user',
     email: profile.email?.trim() || 'No email on file',
-    phone: profile.phone ?? fallbackPhone || 'No phone on file',
+    phone: profile.phone ?? (fallbackPhone || 'No phone on file'),
     status: profile.status === 'active' ? 'active' : 'suspended',
     role: profile.role === 'admin' ? 'admin' : profile.role === 'client' ? 'client' : 'user',
     totalBookings: 0,
@@ -81,6 +82,7 @@ export default function ClientsPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [creatingClient, setCreatingClient] = useState(false)
+  const [saveFeedback, setSaveFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [newClientFirstName, setNewClientFirstName] = useState('')
   const [newClientLastName, setNewClientLastName] = useState('')
   const [newClientEmail, setNewClientEmail] = useState('')
@@ -172,6 +174,7 @@ export default function ClientsPage() {
     const fullName = [firstName, lastName].filter(Boolean).join(' ')
 
     if (!firstName || !lastName || !email) {
+      setSaveFeedback({ type: 'error', message: 'First name, last name, and email are required.' })
       toast({
         title: 'Missing required fields',
         description: 'First name, last name, and email are required.',
@@ -180,38 +183,52 @@ export default function ClientsPage() {
     }
 
     setCreatingClient(true)
-    const response = await fetch('/api/admin/clients', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        firstName,
-        lastName,
-        email,
-        phone,
-      }),
-    })
-    const payload = (await response.json().catch(() => ({}))) as { error?: string }
-    setCreatingClient(false)
+    setSaveFeedback(null)
+    try {
+      const response = await fetch('/api/admin/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          phone,
+        }),
+      })
+      const payload = (await response.json().catch(() => ({}))) as { error?: string }
 
-    if (!response.ok) {
+      if (!response.ok) {
+        const errorMessage = payload.error ?? `Request failed with status ${response.status}`
+        setSaveFeedback({ type: 'error', message: errorMessage })
+        toast({
+          title: 'Failed to add client',
+          description: errorMessage,
+        })
+        return
+      }
+
+      setNewClientFirstName('')
+      setNewClientLastName('')
+      setNewClientEmail('')
+      setNewClientPhone('')
+      setSaveFeedback({ type: 'success', message: `${fullName} was saved successfully.` })
+      await loadClients()
+      setPage(1)
+      setAddDialogOpen(false)
+      toast({
+        title: 'Input acknowledged',
+        description: `${fullName} was saved successfully in Supabase (public.profiles).`,
+      })
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Network error while saving client.'
+      setSaveFeedback({ type: 'error', message: errorMessage })
       toast({
         title: 'Failed to add client',
-        description: payload.error ?? 'Unknown server error',
+        description: errorMessage,
       })
-      return
+    } finally {
+      setCreatingClient(false)
     }
-
-    setNewClientFirstName('')
-    setNewClientLastName('')
-    setNewClientEmail('')
-    setNewClientPhone('')
-    setAddDialogOpen(false)
-    await loadClients()
-    setPage(1)
-    toast({
-      title: 'Client added',
-      description: `${fullName} was saved to Supabase and added to this list.`,
-    })
   }
 
   async function toggleSuspend(id: string) {
@@ -303,12 +320,18 @@ export default function ClientsPage() {
                 })
                 return
               }
-              router.push(`/admin/bookings?clientName=${encodeURIComponent(activeClient.name)}`)
+              router.push(`/admin/bookings?clientId=${encodeURIComponent(activeClient.id)}`)
             }}
           >
             Create booking for client
           </Button>
-          <Button className="rounded-full" onClick={() => setAddDialogOpen(true)}>
+          <Button
+            className="rounded-full"
+            onClick={() => {
+              setSaveFeedback(null)
+              setAddDialogOpen(true)
+            }}
+          >
             <Plus className="mr-2 size-4" />
             Add client
           </Button>
@@ -666,7 +689,13 @@ export default function ClientsPage() {
         </Dialog>
       )}
 
-      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+      <Dialog
+        open={addDialogOpen}
+        onOpenChange={(open) => {
+          setAddDialogOpen(open)
+          if (!open) setSaveFeedback(null)
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add client</DialogTitle>
@@ -694,6 +723,12 @@ export default function ClientsPage() {
               onChange={(event) => setNewClientPhone(event.target.value)}
               placeholder="Phone (optional)"
             />
+            {saveFeedback ? (
+              <Alert variant={saveFeedback.type === 'error' ? 'destructive' : 'default'}>
+                <AlertTitle>{saveFeedback.type === 'success' ? 'Successfully saved' : 'Error'}</AlertTitle>
+                <AlertDescription>{saveFeedback.message}</AlertDescription>
+              </Alert>
+            ) : null}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAddDialogOpen(false)} disabled={creatingClient}>
