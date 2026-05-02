@@ -80,10 +80,10 @@ const stories = [
 
 export function SocialProof() {
   return (
-    <section id="reviews" className="py-20 md:py-28 bg-secondary/50">
+    <section id="reviews" className="scroll-mt-28 md:scroll-mt-32 py-10 md:py-20 bg-secondary/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16">
+        <div className="text-center max-w-2xl mx-auto mb-8 md:mb-10">
           <h2 className="text-3xl md:text-4xl font-semibold text-foreground tracking-tight text-balance">
             Real patient experiences
           </h2>
@@ -95,7 +95,7 @@ export function SocialProof() {
         <VideoTestimonialGrid />
 
         {/* Testimonials Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10 md:mb-12">
           {testimonials.map((testimonial, index) => (
             <div
               key={index}
@@ -119,8 +119,8 @@ export function SocialProof() {
         </div>
 
         {/* Results Section */}
-        <div className="mb-20">
-          <h3 className="text-2xl font-semibold text-foreground text-center mb-10">
+        <div className="mb-10 md:mb-12">
+          <h3 className="text-2xl font-semibold text-foreground text-center mb-6 md:mb-8">
             Results that feel as good as they look
           </h3>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -152,7 +152,7 @@ export function SocialProof() {
 
         {/* Transformation Stories */}
         <div>
-          <h3 className="text-2xl font-semibold text-foreground text-center mb-10">
+          <h3 className="text-2xl font-semibold text-foreground text-center mb-6 md:mb-8">
             Patient transformation stories
           </h3>
           <div className="grid md:grid-cols-3 gap-6">

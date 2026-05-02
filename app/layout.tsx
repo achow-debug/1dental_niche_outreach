@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Manrope } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
+import { AppToaster } from '@/components/app-toaster'
 
 const manrope = Manrope({ 
   subsets: ["latin"],
@@ -46,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${manrope.variable} bg-background`}>
+    <html lang="en-GB" className={`${manrope.variable} bg-background`}>
       <body className="font-sans antialiased relative">
         <a
           href="#main-content"
@@ -56,6 +57,7 @@ export default function RootLayout({
         </a>
         <div className="film-grain" aria-hidden="true" />
         {children}
+        <AppToaster />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

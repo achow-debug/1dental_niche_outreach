@@ -56,7 +56,7 @@ export function Hero({ onBookClick, onLearnMoreClick }: HeroProps) {
       <BackgroundVideo />
       
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-16 lg:gap-24 items-center">
+        <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-10 lg:gap-16 items-center">
           {/* Content */}
           <div 
             className="text-center lg:text-left relative z-10 transition-transform duration-300 ease-out motion-reduce:transition-none"
@@ -69,7 +69,7 @@ export function Hero({ onBookClick, onLearnMoreClick }: HeroProps) {
               </span>
             </div>
             
-            <h1 className="text-editorial text-5xl md:text-6xl lg:text-8xl font-bold text-foreground mb-8 animate-fade-in-up animation-delay-100">
+            <h1 className="text-editorial text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-foreground mb-6 md:mb-8 animate-fade-in-up animation-delay-100">
               Gentle care <br className="hidden md:block" />
               <span className="text-primary">for your smile.</span>
             </h1>
@@ -142,9 +142,9 @@ export function Hero({ onBookClick, onLearnMoreClick }: HeroProps) {
       </div>
       
       {/* Trust Band below Hero */}
-      <div className="mt-24 md:mt-32 relative z-10 w-full">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-border/50 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div className="mt-14 md:mt-20 relative z-10 w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-border/50 py-8 md:py-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5 md:gap-6">
             {trustItems.map((item, index) => (
               <div key={index} className="flex items-center gap-4 group">
                 <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center transition-colors group-hover:bg-primary/10">

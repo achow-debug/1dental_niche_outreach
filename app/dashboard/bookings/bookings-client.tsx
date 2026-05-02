@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils'
 import { getHistoryBookings, getUpcomingBookings } from '@/lib/dashboard/dashboard-booking-utils'
 import {
   buildGlobalBookingsEmptyState,
-  buildNoVisitsTodayReminder,
+  buildNoVisitsTodayEmptyState,
   buildTabBookingsEmptyState,
 } from '@/lib/dashboard/bookings-empty-state'
 import { PremiumBookingsEmpty } from '@/components/dashboard/premium-bookings-empty'
@@ -64,7 +64,7 @@ export function BookingsClient({ bookings }: Props) {
     ? sorted.filter((b) => new Date(b.startsAt).toDateString() === selectedDayKey)
     : []
 
-  const noVisitsTodayReminder = useMemo(() => buildNoVisitsTodayReminder(bookings), [bookings])
+  const noVisitsTodayModel = useMemo(() => buildNoVisitsTodayEmptyState(bookings), [bookings])
 
   return (
     <div className="space-y-6">
@@ -95,13 +95,15 @@ export function BookingsClient({ bookings }: Props) {
 
           <TabsContent value="list" className="mt-4 space-y-4">
             <>
-              {listTab === 'upcoming' && listRows.length > 0 && noVisitsTodayReminder ? (
-                <p
-                  className="rounded-xl border border-primary/20 bg-primary/[0.06] px-4 py-3 text-sm text-foreground"
-                  role="status"
-                >
-                  {noVisitsTodayReminder}
-                </p>
+              {listTab === 'upcoming' && listRows.length > 0 && noVisitsTodayModel ? (
+                <PremiumBookingsEmpty
+                  variant="full"
+                  model={noVisitsTodayModel}
+                  onSecondary={(action) => {
+                    setListTab(action === 'history' ? 'history' : 'upcoming')
+                    setView('list')
+                  }}
+                />
               ) : null}
               <div
                 role="tablist"

@@ -1,22 +1,50 @@
-import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { getAvatarSignedUrl } from '@/lib/avatar'
+import { loadDashboardNotifications } from '@/lib/dashboard/load-user-notifications-server'
+import { DashboardShell } from '@/components/dashboard/dashboard-shell'
+import { DashboardBookingsRealtime } from '@/components/dashboard/dashboard-bookings-realtime'
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login?redirect=/dashboard')
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role, full_name, avatar_url')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (profile?.role === 'admin' || profile?.role === 'staff') {
+    redirect('/admin')
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">{children}</main>
+      </div>
+    )
+  }
+
+  const avatarSigned = await getAvatarSignedUrl(supabase, profile.avatar_url)
+  const notifications = await loadDashboardNotifications()
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border/80 bg-card/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-6">
-            <Link href="/dashboard" className="font-semibold text-foreground">
-              My account
-            </Link>
-            <span className="text-xs text-muted-foreground">Dashboard</span>
-          </div>
-          <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
-            Marketing site
-          </Link>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">{children}</main>
-    </div>
+    <DashboardShell
+      email={user.email ?? 'Unknown user'}
+      fullName={profile.full_name}
+      avatarUrl={avatarSigned}
+      notifications={notifications}
+    >
+      <DashboardBookingsRealtime userId={user.id} />
+      {children}
+    </DashboardShell>
   )
 }

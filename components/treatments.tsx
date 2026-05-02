@@ -110,9 +110,9 @@ export function Treatments({ catalogItems, onBookClick }: TreatmentsProps) {
   const fromCatalog = catalogItems.length > 0
 
   return (
-    <section id="treatments" className="py-20 md:py-28 bg-secondary/50">
+    <section id="treatments" className="scroll-mt-28 md:scroll-mt-32 py-10 md:py-20 bg-secondary/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-16">
+        <div className="text-center max-w-2xl mx-auto mb-8 md:mb-10">
           <h2 className="text-3xl md:text-4xl font-semibold text-foreground tracking-tight text-balance">
             Treatments designed around your needs
           </h2>
@@ -165,7 +165,7 @@ export function Treatments({ catalogItems, onBookClick }: TreatmentsProps) {
           })}
         </div>
 
-        <div className="text-center mt-12">
+        <div className="text-center mt-8 md:mt-10">
           <Button onClick={() => onBookClick()} variant="cta" className="h-12 px-8 font-medium min-h-12 w-full sm:w-auto">
             Book appointment
           </Button>

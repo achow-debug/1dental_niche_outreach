@@ -10,9 +10,9 @@ const credentials = [
 
 export function MeetDentist() {
   return (
-    <section id="team" className="py-20 md:py-28 bg-secondary/50">
+    <section id="team" className="scroll-mt-28 md:scroll-mt-32 py-10 md:py-20 bg-secondary/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           {/* Image */}
           <div className="relative order-2 lg:order-1">
             <div className="aspect-[3/4] rounded-3xl overflow-hidden bg-muted max-w-md mx-auto lg:mx-0 shadow-xl">

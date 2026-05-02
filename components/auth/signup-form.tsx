@@ -56,7 +56,9 @@ export function SignupForm() {
       return
     }
 
-    setMessage('Check your email to confirm your address, then return here to log in.')
+    setMessage(
+      'No session was returned — try signing in. If your practice still sends confirmation emails, check your inbox.',
+    )
   }
 
   return (

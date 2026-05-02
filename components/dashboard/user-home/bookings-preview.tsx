@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import { getHistoryBookings, getUpcomingBookings } from '@/lib/dashboard/dashboard-booking-utils'
 import {
   buildGlobalBookingsEmptyState,
-  buildNoVisitsTodayReminder,
+  buildNoVisitsTodayEmptyState,
   buildTabBookingsEmptyState,
 } from '@/lib/dashboard/bookings-empty-state'
 import { PremiumBookingsEmpty } from '@/components/dashboard/premium-bookings-empty'
@@ -47,7 +47,7 @@ export function BookingsPreview({ bookings }: Props) {
   const upcoming = useMemo(() => getUpcomingBookings(bookings), [bookings])
   const history = useMemo(() => getHistoryBookings(bookings), [bookings])
   const list = tab === 'upcoming' ? upcoming : history
-  const noVisitsTodayReminder = useMemo(() => buildNoVisitsTodayReminder(bookings), [bookings])
+  const noVisitsTodayModel = useMemo(() => buildNoVisitsTodayEmptyState(bookings), [bookings])
 
   return (
     <Card>
@@ -102,10 +102,12 @@ export function BookingsPreview({ bookings }: Props) {
           />
         ) : (
           <>
-            {tab === 'upcoming' && noVisitsTodayReminder ? (
-              <p className="rounded-lg border border-primary/15 bg-primary/[0.05] px-3 py-2 text-xs text-foreground sm:text-sm">
-                {noVisitsTodayReminder}
-              </p>
+            {tab === 'upcoming' && noVisitsTodayModel ? (
+              <PremiumBookingsEmpty
+                variant="compact"
+                model={noVisitsTodayModel}
+                onSecondary={(action) => setTab(action === 'history' ? 'history' : 'upcoming')}
+              />
             ) : null}
             <ul className="space-y-2">
               {list.slice(0, PREVIEW_LIMIT).map((b) => (

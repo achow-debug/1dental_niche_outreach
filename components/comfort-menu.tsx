@@ -7,7 +7,7 @@ const amenities = [
   {
     icon: Headphones,
     title: "Noise-Cancelling Headphones",
-    description: "Tune out the clinic sounds with your favorite playlist or podcast during treatment."
+    description: "Tune out the clinic sounds with your favourite playlist or podcast during treatment."
   },
   {
     icon: Wind,
@@ -47,9 +47,9 @@ export function ComfortMenu() {
             <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-primary bg-primary/10 px-3 py-1 rounded-full mb-6 inline-block">
               Total Patient Care
             </span>
-            <h2 className="text-editorial text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+            <h2 className="text-editorial text-3xl md:text-5xl lg:text-6xl font-bold mb-6">
               Our Comfort Menu. <br />
-              <span className="text-muted-foreground text-3xl md:text-4xl lg:text-5xl font-medium">Because you deserve it.</span>
+              <span className="text-muted-foreground text-2xl md:text-4xl lg:text-5xl font-medium">Because you deserve it.</span>
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
               We've redesigned the dental experience around five-star hospitality. These amenities are complimentary for all patients because your comfort is a clinical priority.

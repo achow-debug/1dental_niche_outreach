@@ -42,10 +42,10 @@ const promises = [
 
 export function PricingSection({ onBookClick }: PricingSectionProps) {
   return (
-    <section id="pricing" className="py-20 md:py-28 bg-background">
+    <section id="pricing" className="scroll-mt-28 md:scroll-mt-32 py-10 md:py-20 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16">
+        <div className="text-center max-w-2xl mx-auto mb-8 md:mb-10">
           <h2 className="text-3xl md:text-4xl font-semibold text-foreground tracking-tight text-balance">
             Transparent pricing, quality care
           </h2>
@@ -54,7 +54,7 @@ export function PricingSection({ onBookClick }: PricingSectionProps) {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8 mb-16">
+        <div className="grid lg:grid-cols-2 gap-6 md:gap-8 mb-8 md:mb-10">
           {/* Standard Pricing */}
           <div className="bg-card rounded-3xl p-8 border border-border">
             <h3 className="text-xl font-semibold text-foreground mb-6">

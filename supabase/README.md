@@ -6,6 +6,8 @@
 2. Open **SQL Editor** and run the contents of `migrations/20260419120000_initial_schema.sql`, or use the Supabase CLI (`supabase db push`) after linking the project.
 3. In **Authentication → URL configuration**, add your local site URL (e.g. `http://localhost:3000`) and redirect URL `http://localhost:3000/auth/callback`.
 
+4. **Email sign-up (optional but recommended for this app):** In **Authentication → Providers → Email**, turn off **Confirm email** if you want new patients to land in `/dashboard` immediately after sign-up (matches the app flow). Keep **Secure email change** on unless your security policy says otherwise. Use the same setting on staging so behaviour matches production.
+
 ## Environment variables
 
 Copy `.env.local.example` to `.env.local` and set:

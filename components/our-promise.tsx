@@ -7,7 +7,7 @@ export function OurPromise() {
   return (
     <section className="section-padding bg-background overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
           <div className="relative group">
             <div className="relative aspect-[3/4] rounded-[3rem] overflow-hidden shadow-2xl z-10">
               <Image
@@ -40,7 +40,7 @@ export function OurPromise() {
             <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-primary bg-primary/10 px-3 py-1 rounded-full mb-8 inline-block">
               A Personal Commitment
             </span>
-            <h2 className="text-editorial text-4xl md:text-5xl font-bold mb-8 leading-[1.1]">
+            <h2 className="text-editorial text-3xl md:text-5xl font-bold mb-8 leading-[1.1]">
               My promise to you: <br />
               <span className="text-primary">Clinical excellence, <br className="hidden md:block" /> without the clinical feel.</span>
             </h2>

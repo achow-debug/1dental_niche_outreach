@@ -1,10 +1,30 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { SignOutButton } from '@/components/auth/sign-out-button'
+import { ContextualHero } from '@/components/dashboard/user-home/contextual-hero'
+import { NextAppointmentCard } from '@/components/dashboard/user-home/next-appointment-card'
+import { PipelineSummary } from '@/components/dashboard/user-home/pipeline-summary'
+import { BookingsPreview } from '@/components/dashboard/user-home/bookings-preview'
+import { NotificationsPreview } from '@/components/dashboard/user-home/notifications-preview'
+import { OnboardingLane } from '@/components/dashboard/user-home/onboarding-lane'
+import { ReminderTimeline } from '@/components/dashboard/user-home/reminder-timeline'
+import { ProfileCompletenessCard } from '@/components/dashboard/user-home/profile-completeness-card'
+import { QuickLinksGrid } from '@/components/dashboard/user-home/quick-links'
+import { TrustReassuranceCard } from '@/components/dashboard/user-home/trust-reassurance'
+import { TreatmentBookCard } from '@/components/dashboard/user-home/treatment-book-card'
+import { MobileStickyBookCta } from '@/components/dashboard/user-home/mobile-sticky-book-cta'
+import {
+  buildHeroContext,
+  getNextAppointment,
+  getPipelineCounts,
+  getUpcomingBookings,
+  primaryBookCtaLabel,
+} from '@/lib/dashboard/dashboard-booking-utils'
+import { loadUserBookingsForDashboard } from '@/lib/dashboard/load-user-bookings-server'
+import { loadDashboardBookCatalogServer } from '@/lib/dashboard/load-dashboard-book-catalog-server'
+import { loadDashboardNotifications } from '@/lib/dashboard/load-user-notifications-server'
+import { computeProfileCompleteness } from '@/lib/dashboard/profile-completeness'
+import { getRebookHrefFromBookings } from '@/lib/dashboard/user-bookings'
 
 export const metadata = {
   title: 'Dashboard | Carter Dental Studio',
@@ -39,60 +59,95 @@ export default async function DashboardPage() {
     redirect('/admin')
   }
 
+  const firstName =
+    profile.first_name || profile.full_name?.split(' ')[0] || user.email?.split('@')[0] || 'there'
+
+  const [bookings, notifications, bookCatalog] = await Promise.all([
+    loadUserBookingsForDashboard(),
+    loadDashboardNotifications(),
+    loadDashboardBookCatalogServer(supabase),
+  ])
+
+  const treatmentPreview = bookCatalog.slice(0, 3).map((t) => ({
+    catalogSlug: t.catalogSlug,
+    name: t.name,
+    durationMinutes: t.durationMinutes,
+    priceLabel: t.priceLabel,
+    badge: t.badge,
+  }))
+
+  const hero = buildHeroContext(firstName, bookings)
+  const pipeline = getPipelineCounts(bookings)
+  const nextAppointment = getNextAppointment(bookings)
+  const upcoming = getUpcomingBookings(bookings)
+  const hasAnyBooking = bookings.length > 0
+  const primaryCtaLabel = primaryBookCtaLabel(hasAnyBooking)
+  const rebookHref = getRebookHrefFromBookings(bookings)
+
+  const p = profile as Record<string, string | null | undefined>
+  const completeness = computeProfileCompleteness({
+    first_name: p.first_name ?? null,
+    last_name: p.last_name ?? null,
+    full_name: p.full_name ?? null,
+    phone: p.phone ?? null,
+    phone_number: p.phone_number ?? null,
+    address_line1: p.address_line1 ?? null,
+    city: p.city ?? null,
+    post_code: p.post_code ?? null,
+  })
+
+  const onboardingSteps = [
+    {
+      id: 'profile',
+      title: 'Complete your profile',
+      description: 'Add contact details so we can reach you if your visit time changes.',
+      done: completeness.percent === 100,
+      href: '/profile',
+      cta: 'Edit profile',
+    },
+    {
+      id: 'book',
+      title: 'Book your first appointment',
+      description: 'Pick a treatment and time — booking takes just a minute.',
+      done: hasAnyBooking,
+      href: '/dashboard/book',
+      cta: 'Start booking',
+    },
+  ]
+
+  const showOnboarding = onboardingSteps.some((s) => !s.done)
+
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Your dashboard</h1>
-          <p className="mt-2 text-muted-foreground">
-            Placeholder for patient-facing tools. Accounts with role <code className="rounded bg-muted px-1 py-0.5">user</code> or{' '}
-            <code className="rounded bg-muted px-1 py-0.5">client</code> land here after sign-in.
-          </p>
+    <div className="space-y-5 pb-[5.75rem] md:space-y-6 md:pb-6">
+      <ContextualHero
+        context={hero}
+        roleLabel={String(profile.role).replace('_', ' ')}
+        statusLabel={profile.status ? String(profile.status).replace('_', ' ') : null}
+      />
+
+      <div className="grid gap-5 lg:grid-cols-3 lg:gap-6">
+        <div className="space-y-5 lg:col-span-2 lg:space-y-6">
+          <NextAppointmentCard booking={nextAppointment} />
+          <PipelineSummary counts={pipeline} />
+          <BookingsPreview bookings={bookings} />
+          <TreatmentBookCard
+            rebookHref={rebookHref}
+            primaryCtaLabel={primaryCtaLabel}
+            previewTreatments={treatmentPreview}
+          />
+          <NotificationsPreview items={notifications} />
         </div>
-        <SignOutButton />
+
+        <aside className="space-y-5 lg:space-y-6">
+          <OnboardingLane steps={onboardingSteps} show={showOnboarding} />
+          <ReminderTimeline upcoming={upcoming} />
+          <ProfileCompletenessCard percent={completeness.percent} missing={completeness.missing} />
+          <QuickLinksGrid />
+          <TrustReassuranceCard />
+        </aside>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Session</CardTitle>
-          <CardDescription>Signed-in user and profile row from `profiles`.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-muted-foreground">Email</span>
-            <span className="font-medium">{user.email}</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-muted-foreground">Role</span>
-            <Badge variant="secondary">{profile.role}</Badge>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-muted-foreground">Status</span>
-            <Badge variant="outline">{profile.status}</Badge>
-          </div>
-          <p className="text-xs text-muted-foreground pt-2">
-            After bookings go live, this role can move from <code className="rounded bg-muted px-1 py-0.5">user</code> to{' '}
-            <code className="rounded bg-muted px-1 py-0.5">client</code> automatically.
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Smoke tests</CardTitle>
-          <CardDescription>Quick checks for this milestone.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <ul className="list-disc space-y-1 pl-5">
-            <li>Sign up a new user and land here with role `user`.</li>
-            <li>Promote a user to `admin` in Supabase and confirm `/admin` works while `/dashboard` redirects to `/admin`.</li>
-            <li>Sign out and sign back in via `/login`.</li>
-          </ul>
-          <Link href="/book" className="font-medium text-primary underline-offset-4 hover:underline">
-            Go to booking (public)
-          </Link>
-        </CardContent>
-      </Card>
+      <MobileStickyBookCta primaryCtaLabel={primaryCtaLabel} />
     </div>
   )
 }

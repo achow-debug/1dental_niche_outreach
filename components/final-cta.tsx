@@ -22,20 +22,20 @@ export function FinalCTA({ onBookClick }: FinalCTAProps) {
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
       
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 animate-fade-in-up">
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full mb-8">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full mb-5 md:mb-6">
           <span className="text-[10px] font-bold tracking-widest uppercase text-primary">Start Your Journey</span>
         </div>
         
-        <h2 className="text-editorial text-4xl md:text-5xl lg:text-7xl font-bold text-foreground mb-8">
+        <h2 className="text-editorial text-3xl md:text-5xl lg:text-7xl font-bold text-foreground mb-5 md:mb-6">
           Ready to experience <br />
           <span className="text-primary italic">calm dental care?</span>
         </h2>
         
-        <p className="mt-6 text-xl text-muted-foreground max-w-2xl mx-auto mb-12 leading-relaxed">
+        <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 md:mb-10 leading-relaxed">
           Take the first step toward a healthier, more confident smile. Book your appointment online in just 2 minutes.
         </p>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-16 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-10 max-w-4xl mx-auto">
           {benefits.map((benefit, index) => (
             <div key={index} className="flex flex-col items-center gap-3 p-4 rounded-3xl glass-surface border-none shadow-sm">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">

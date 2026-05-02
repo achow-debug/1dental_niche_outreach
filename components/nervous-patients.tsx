@@ -32,15 +32,18 @@ const reassurances = [
 
 export function NervousPatients({ onBookClick }: NervousPatientsProps) {
   return (
-    <section id="reassurance" className="section-padding bg-background relative overflow-hidden">
+    <section
+      id="reassurance"
+      className="section-padding scroll-mt-28 md:scroll-mt-32 bg-background relative overflow-hidden"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-16 lg:gap-32 items-center">
+        <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 lg:gap-14 items-center">
           {/* Content */}
           <div className="animate-fade-in-up">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full mb-8">
               <span className="text-[10px] font-bold tracking-widest uppercase text-primary">A Reassuring Environment</span>
             </div>
-            <h2 className="text-editorial text-4xl md:text-5xl lg:text-7xl font-bold text-foreground mb-8">
+            <h2 className="text-editorial text-3xl md:text-5xl lg:text-7xl font-bold text-foreground mb-8">
               Your comfort is <br />
               <span className="text-primary italic">our priority.</span>
             </h2>

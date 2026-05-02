@@ -81,14 +81,19 @@ export function Header({ onBookClick }: HeaderProps) {
             </Button>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2.5 rounded-xl bg-secondary/50 text-foreground transition-colors hover:bg-secondary"
-            aria-label="Toggle menu"
-          >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          {/* Mobile: profile avatar (signed-in) + hamburger — kept separate for clarity */}
+          <div className="flex items-center gap-1.5 md:hidden">
+            <HeaderAuthSection variant="mobile-toolbar" onNavigate={() => setIsMobileMenuOpen(false)} />
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="shrink-0 rounded-xl bg-secondary/50 p-2.5 text-foreground transition-colors hover:bg-secondary"
+              aria-expanded={isMobileMenuOpen}
+              aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+            >
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -106,7 +111,7 @@ export function Header({ onBookClick }: HeaderProps) {
                 {link.label}
               </Link>
             ))}
-            <HeaderAuthSection variant="mobile" onNavigate={() => setIsMobileMenuOpen(false)} />
+            <HeaderAuthSection variant="mobile-drawer" onNavigate={() => setIsMobileMenuOpen(false)} />
             <Button 
               onClick={() => {
                 setIsMobileMenuOpen(false)

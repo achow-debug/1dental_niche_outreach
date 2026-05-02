@@ -36,9 +36,20 @@ Build a premium, mobile-first dashboard experience for `user` and `client` roles
   - CTA adapts based on history:
     - No bookings: `Book your first visit`
     - Has bookings: `Book another session`
+- Add direct treatment booking from dashboard:
+  - Dashboard card with `Book Treatment` and optional `Rebook last treatment`.
+  - Upcoming treatments preview strip with `View all treatments`.
+- Introduce dedicated booking surfaces:
+  - `/dashboard/book` (treatment selection hub)
+  - `/dashboard/book/calendar` (calendar + slot picker)
+  - `/dashboard/book/confirm` (final confirmation)
+- Slot-disclosure strategy (avoid overwhelming users):
+  - Do not show every slot at once.
+  - Require treatment selection first, then show only nearest relevant dates/times.
+  - Use progressive reveal patterns (`Show more times`, day-part grouping, limited initial slots).
 
 ### 3) Smart Notifications
-- Notification bell in dashboard header area with unread counter.
+- Notification bell in dashboard header area with unread counter, which when clicked, displays a pop-up preview stemming from the bell.
 - Activity feed module (bookings, reminders, status updates).
 - Non-intrusive push-style in-app alerts:
   - Small toast/alert cards for important events (confirmations, changes).
@@ -85,6 +96,18 @@ Build a premium, mobile-first dashboard experience for `user` and `client` roles
   - Every card includes at least one explicit next step (button/link).
 - Non-intrusive feedback:
   - Success/error states shown via inline alerts and toasts.
+- Booking flow UX:
+  - Step sequence: Treatment -> Time -> Confirm.
+  - Keep selected treatment and slot visible in sticky/mobile summary.
+  - Match admin calendar visual language, but simplify controls for user/client context.
+- Slot presentation UX:
+  - Group slots by morning/afternoon/evening.
+  - Start with concise default slot set per day and expand on demand.
+  - Highlight best/soonest slots instead of rendering full dense inventory.
+- Micro-interactions (subtle, mobile-first):
+  - Treatment card selection state animation.
+  - Slot tap feedback and sticky CTA enable transition.
+  - Gentle feed/card entrance transitions and unread badge pulse (reduced-motion aware).
 
 ## Technical Implementation Outline (No Coding Yet)
 
@@ -92,6 +115,10 @@ Build a premium, mobile-first dashboard experience for `user` and `client` roles
 - Refactor current `app/dashboard/page.tsx` placeholder into modular sections.
 - Keep access/role logic as-is (user/client stay on dashboard; admin/staff redirect to admin).
 - Build section-level components under dashboard-local component directory for maintainability.
+- Add dedicated booking route group under dashboard for:
+  - Treatment hub page
+  - Calendar/slot selection page
+  - Confirmation page
 
 ### B) Data Requirements
 - Session/profile data for personalized greeting and completeness checks.
@@ -100,6 +127,12 @@ Build a premium, mobile-first dashboard experience for `user` and `client` roles
   - Pipeline summary
   - Upcoming/history listing
   - Rebooking context
+- Treatment catalog data for:
+  - Upcoming/available treatments on dashboard
+  - Search/filter in booking hub
+- Availability/slot data for:
+  - Calendar date availability states
+  - Time slots scoped to selected treatment/date
 - Notification/activity data for bell count and feed rendering.
 - Reminder data for timeline milestones.
 
@@ -107,6 +140,10 @@ Build a premium, mobile-first dashboard experience for `user` and `client` roles
 - Use skeleton/loading placeholders per section (not full-page blocking).
 - Render hero and core next-step CTAs early; hydrate secondary modules progressively.
 - Preserve resilient empty states for new users with zero bookings.
+- For booking flow:
+  - Persist selected treatment across booking steps.
+  - Load calendar and slot data incrementally (date first, slots on date select).
+  - Apply initial slot cap per day with explicit expand control.
 
 ### D) Design System Alignment
 - Reuse existing shared UI primitives (`Card`, `Badge`, `Button`, `Alert`, etc.).
@@ -118,6 +155,9 @@ Build a premium, mobile-first dashboard experience for `user` and `client` roles
 - Define notification feed source and unread tracking model for user dashboard.
 - Validate profile completeness fields available in `profiles` table.
 - Confirm timeline/reminder data source (derived or dedicated reminders table/event stream).
+- Confirm treatment catalog endpoint shape for user/client booking pages.
+- Confirm availability endpoint supports filtered, paginated, or capped slot responses for progressive reveal.
+- Ensure booking creation endpoint accepts selected treatment + slot references from user dashboard flow.
 
 ## Milestones
 
@@ -130,6 +170,10 @@ Build a premium, mobile-first dashboard experience for `user` and `client` roles
 - Next appointment card + pipeline metrics.
 - Upcoming/history list and one-click rebooking action.
 - History-aware primary booking CTA behavior.
+- Dashboard `Book Treatment` entry card + upcoming treatments preview.
+- Dedicated booking hub (`/dashboard/book`) for treatment selection.
+- Calendar/slot step (`/dashboard/book/calendar`) with progressive slot reveal.
+- Confirmation step (`/dashboard/book/confirm`) before final booking submit.
 
 ### Milestone 3: Notifications and Activity
 - Bell indicator with unread count.
@@ -145,6 +189,7 @@ Build a premium, mobile-first dashboard experience for `user` and `client` roles
 - Motion tuning and accessibility checks.
 - Responsive QA across common device widths.
 - Empty/error/loading state audit for every module.
+- Micro-interaction QA (tap states, transitions, sticky CTA behavior, reduced-motion support).
 
 ## Acceptance Criteria (v1)
 - Dashboard feels visually aligned with admin branding and premium quality.

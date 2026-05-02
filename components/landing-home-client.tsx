@@ -2,8 +2,10 @@
 
 import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { prefersReducedMotion } from '@/lib/prefers-reduced-motion'
 import { Header } from '@/components/header'
 import { Hero } from '@/components/hero'
+import { LandingQuickFind } from '@/components/landing-quick-find'
 import { AuthorityBand } from '@/components/authority-band'
 import { SmileQuiz } from '@/components/smile-quiz'
 import { WhyChooseUs } from '@/components/why-choose-us'
@@ -19,6 +21,7 @@ import { FAQSection } from '@/components/faq-section'
 import { PricingSection } from '@/components/pricing-section'
 import { FinalCTA } from '@/components/final-cta'
 import { Footer } from '@/components/footer'
+import { LandingBackToTop } from '@/components/landing-back-to-top'
 import { MobilestickyCTA } from '@/components/mobile-sticky-cta'
 import { ScrollReveal } from '@/components/scroll-reveal'
 import { SuitabilityChecker } from '@/components/suitability-checker'
@@ -54,7 +57,8 @@ export function LandingHomeClient({ isLoggedIn, catalogItems }: Props) {
 
   const handleLearnMoreClick = () => {
     const section = document.getElementById('why-us')
-    section?.scrollIntoView({ behavior: 'smooth' })
+    const behavior = prefersReducedMotion() ? 'auto' : 'smooth'
+    section?.scrollIntoView({ behavior })
   }
 
   return (
@@ -67,11 +71,13 @@ export function LandingHomeClient({ isLoggedIn, catalogItems }: Props) {
 
       <Hero onBookClick={handleBookClick} onLearnMoreClick={handleLearnMoreClick} />
 
+      <LandingQuickFind />
+
       <ScrollReveal>
         <AuthorityBand />
       </ScrollReveal>
 
-      <ScrollReveal className="section-padding">
+      <ScrollReveal className="py-8 md:py-12">
         <SmileQuiz onBookClick={handleBookClick} />
       </ScrollReveal>
 
@@ -131,7 +137,9 @@ export function LandingHomeClient({ isLoggedIn, catalogItems }: Props) {
 
       <MobilestickyCTA onBookClick={handleBookClick} />
 
-      <div className="h-24 md:hidden" aria-hidden="true" />
+      <LandingBackToTop />
+
+      <div className="h-14 md:hidden" aria-hidden="true" />
     </main>
   )
 }

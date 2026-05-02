@@ -82,7 +82,7 @@ const concerns = [
 
 export function FAQSection() {
   return (
-    <section id="faq" className="py-20 md:py-28 bg-background">
+    <section id="faq" className="scroll-mt-28 md:scroll-mt-32 py-10 md:py-20 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-6">
@@ -103,7 +103,7 @@ export function FAQSection() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-12">
+        <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
           {/* Reassurance Cards */}
           <div className="space-y-4 lg:order-1">
             {reassuranceCards.map((card, index) => (

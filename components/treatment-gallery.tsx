@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback } from "react"
 import { ChevronRight, ChevronLeft, Info } from "lucide-react"
 
+/** Remote assets — local `/images/before-*.jpg` are not shipped; these load reliably for the demo slider. */
 const cases = [
   {
     id: 1,
@@ -10,12 +11,10 @@ const cases = [
     description:
       "Whiter, more aligned teeth using a combination of porcelain veneers and professional whitening — framed for even light and natural proportions.",
     notes: "Completed over 3 visits.",
-    before: "/images/before-smile.jpg",
-    after: "/images/after-smile.jpg",
-    beforeFallback:
-      "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=2000",
-    afterFallback:
-      "https://images.unsplash.com/photo-1588776814546-1ffce47267a5?auto=format&fit=crop&q=80&w=2000",
+    before:
+      "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=1600",
+    after:
+      "https://images.unsplash.com/photo-1588776814546-1ffce47267a5?auto=format&fit=crop&q=80&w=1600",
   },
   {
     id: 2,
@@ -23,26 +22,18 @@ const cases = [
     description:
       "Corrected crowding and bite alignment without fixed braces — consistent photography for a fair before/after comparison.",
     notes: "Treatment time: 9 months.",
-    before: "/images/before-invisalign.jpg",
-    after: "/images/after-invisalign.jpg",
-    beforeFallback:
-      "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=2000",
-    afterFallback:
-      "https://images.unsplash.com/photo-1588776814546-1ffce47267a5?auto=format&fit=crop&q=80&w=2000",
+    before:
+      "https://images.unsplash.com/photo-1620775397926-f50f6e21ed2f?auto=format&fit=crop&q=80&w=1600",
+    after:
+      "https://images.unsplash.com/photo-1579684947550-22e945225d99?auto=format&fit=crop&q=80&w=1600",
   },
 ] as const
 
 export function TreatmentGallery() {
   const [activeTab, setActiveTab] = useState(0)
   const [sliderPosition, setSliderPosition] = useState(50)
-  const [useFallback, setUseFallback] = useState(false)
 
   const c = cases[activeTab]
-  const beforeSrc = useMemo(
-    () => (useFallback ? c.beforeFallback : c.before),
-    [c, useFallback]
-  )
-  const afterSrc = useMemo(() => (useFallback ? c.afterFallback : c.after), [c, useFallback])
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSliderPosition(Number(e.target.value))
@@ -54,44 +45,55 @@ export function TreatmentGallery() {
   }, [])
 
   return (
-    <section className="section-padding bg-secondary/30">
+    <section
+      id="results"
+      className="section-padding bg-secondary/30 scroll-mt-28 md:scroll-mt-32"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-editorial text-4xl md:text-5xl font-bold mb-4">Before &amp; after — same light, real outcomes</h2>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
+        <div className="text-center mb-6 md:mb-10">
+          <h2 className="text-editorial text-3xl md:text-5xl font-bold mb-2 md:mb-3 leading-tight md:leading-[1.15]">
+            Before &amp; after — same light, real outcomes
+          </h2>
+          <p className="text-muted-foreground text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
             Drag the handle to compare. High-impact cosmetic treatments (whitening, veneers, alignment) with brief clinical
             notes — swap in your own case photography when you&apos;re ready.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-[1fr_400px] gap-12 items-center">
+        <div className="grid lg:grid-cols-[1fr_400px] gap-6 lg:gap-10 items-start lg:items-center">
           <div
-            className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl border border-white/20 interactive-card-lift"
+            className="relative w-full overflow-hidden rounded-2xl border border-border/60 bg-muted shadow-xl md:rounded-3xl aspect-[4/3] sm:aspect-video min-h-[13rem]"
             role="region"
             aria-label="Before and after comparison slider"
             onKeyDown={onKeyDown}
             tabIndex={0}
           >
+            {/* After (full frame) */}
             <div className="absolute inset-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={afterSrc}
+                src={c.after}
                 alt="After treatment"
-                className="w-full h-full object-cover"
-                onError={() => setUseFallback(true)}
+                className="absolute inset-0 block h-full w-full object-cover"
+                sizes="(max-width: 1024px) 100vw, 65vw"
+                loading="lazy"
+                decoding="async"
               />
             </div>
 
+            {/* Before (clipped from the left) */}
             <div
-              className="absolute inset-0 z-10 overflow-hidden"
+              className="absolute inset-0 z-[1] overflow-hidden will-change-[clip-path]"
               style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={beforeSrc}
+                src={c.before}
                 alt="Before treatment"
-                className="w-full h-full object-cover grayscale"
-                onError={() => setUseFallback(true)}
+                className="absolute inset-0 block h-full w-full object-cover grayscale brightness-[0.92]"
+                sizes="(max-width: 1024px) 100vw, 65vw"
+                loading="lazy"
+                decoding="async"
               />
             </div>
 
@@ -102,51 +104,51 @@ export function TreatmentGallery() {
               value={sliderPosition}
               onChange={handleSliderChange}
               aria-label="Compare before and after"
-              className="absolute inset-0 w-full h-full opacity-0 z-30 cursor-ew-resize"
+              className="absolute inset-0 z-[35] h-full w-full cursor-ew-resize opacity-0"
             />
 
             <div
-              className="absolute top-0 bottom-0 z-20 w-1 bg-white shadow-xl pointer-events-none"
+              className="pointer-events-none absolute inset-y-0 z-20 w-0.5 bg-white shadow-lg -translate-x-1/2"
               style={{ left: `${sliderPosition}%` }}
             >
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white shadow-2xl flex items-center justify-center">
+              <div className="absolute top-1/2 left-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white shadow-xl">
                 <div className="flex gap-0.5" aria-hidden>
-                  <ChevronLeft className="w-3 h-3 text-primary" />
-                  <ChevronRight className="w-3 h-3 text-primary" />
+                  <ChevronLeft className="h-3 w-3 text-primary" />
+                  <ChevronRight className="h-3 w-3 text-primary" />
                 </div>
               </div>
             </div>
 
-            <div className="absolute bottom-6 left-6 z-20 px-3 py-1 bg-black/50 backdrop-blur-md text-white text-xs font-bold uppercase tracking-widest rounded-full">
+            <div className="pointer-events-none absolute left-3 top-3 z-30 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm sm:left-4 sm:top-4 sm:px-3 sm:text-xs">
               Before
             </div>
-            <div className="absolute bottom-6 right-6 z-20 px-3 py-1 bg-black/50 backdrop-blur-md text-white text-xs font-bold uppercase tracking-widest rounded-full">
+            <div className="pointer-events-none absolute right-3 top-3 z-30 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm sm:right-4 sm:top-4 sm:px-3 sm:text-xs">
               After
             </div>
           </div>
 
-          <div className="space-y-8">
+          <div className="flex flex-col gap-3 lg:space-y-4">
             {cases.map((item, idx) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => {
                   setActiveTab(idx)
-                  setUseFallback(false)
+                  setSliderPosition(50)
                 }}
-                className={`w-full text-left p-6 rounded-2xl transition-all border ${
+                className={`w-full rounded-2xl border p-4 text-left transition-all sm:p-5 ${
                   activeTab === idx
-                    ? "bg-white border-primary shadow-xl scale-[1.02]"
-                    : "bg-transparent border-border hover:border-primary/50 interactive-card-lift"
+                    ? "scale-[1.01] border-primary bg-white shadow-lg lg:scale-[1.02]"
+                    : "border-border bg-background/40 hover:border-primary/50 interactive-card-lift"
                 }`}
               >
-                <h3 className={`font-bold text-xl mb-2 ${activeTab === idx ? "text-primary" : "text-foreground"}`}>
+                <h3 className={`mb-1.5 text-lg font-bold sm:text-xl ${activeTab === idx ? "text-primary" : "text-foreground"}`}>
                   {item.title}
                 </h3>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4">{item.description}</p>
-                <div className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest">
-                  <Info className="w-4 h-4" aria-hidden />
-                  Clinical note: {item.notes}
+                <p className="mb-3 text-xs leading-relaxed text-muted-foreground sm:text-sm">{item.description}</p>
+                <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-primary sm:text-xs">
+                  <Info className="h-4 w-4 shrink-0" aria-hidden />
+                  <span>Clinical note: {item.notes}</span>
                 </div>
               </button>
             ))}

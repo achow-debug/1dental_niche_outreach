@@ -21,22 +21,25 @@ const steps = [
   {
     icon: CheckCircle2,
     title: "Leave with clarity",
-    description: "You'll leave with a clear understanding of your options and a personalized plan for your smile."
+    description: "You'll leave with a clear understanding of your options and a personalised plan for your smile."
   },
 ]
 
 export function HowItWorks({ onBookClick }: HowItWorksProps) {
   return (
-    <section id="process" className="section-padding bg-secondary/30 relative overflow-hidden">
+    <section
+      id="process"
+      className="section-padding scroll-mt-28 md:scroll-mt-32 bg-secondary/30 relative overflow-hidden"
+    >
       {/* Decorative background glow */}
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="text-center max-w-3xl mx-auto mb-24 animate-fade-in-up">
+        <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16 animate-fade-in-up">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full mb-6">
             <span className="text-[10px] font-bold tracking-widest uppercase text-primary">Simple Process</span>
           </div>
-          <h2 className="text-editorial text-4xl md:text-5xl lg:text-7xl font-bold text-foreground mb-6">
+          <h2 className="text-editorial text-3xl md:text-5xl lg:text-7xl font-bold text-foreground mb-6">
             Everything is <br />
             <span className="text-primary italic">transparent & easy.</span>
           </h2>
@@ -45,7 +48,7 @@ export function HowItWorks({ onBookClick }: HowItWorksProps) {
           </p>
         </div>
         
-        <div className="grid lg:grid-cols-3 gap-12 lg:gap-16 items-start relative pb-12">
+        <div className="grid lg:grid-cols-3 gap-8 lg:gap-10 items-start relative pb-6 md:pb-8">
           {/* Desktop connecting lines */}
           <div className="hidden lg:block absolute top-[60px] left-[15%] right-[15%] h-px bg-primary/20 -z-10" />
           
@@ -74,7 +77,7 @@ export function HowItWorks({ onBookClick }: HowItWorksProps) {
           ))}
         </div>
         
-        <div className="mt-20 text-center animate-fade-in-up animation-delay-500">
+        <div className="mt-10 md:mt-14 text-center animate-fade-in-up animation-delay-500">
           <Button 
             onClick={onBookClick}
             variant="cta"

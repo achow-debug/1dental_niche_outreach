@@ -84,11 +84,7 @@ export function buildTabBookingsEmptyState(bookings: UserBooking[], tab: 'upcomi
   }
 }
 
-/**
- * Friendly line when there are upcoming visits but none today (e.g. “How about tomorrow?”).
- * Returns null if there is a visit today, no upcoming visits, or nothing to say.
- */
-export function buildNoVisitsTodayReminder(bookings: UserBooking[], now = new Date()): string | null {
+function noVisitsTodayContext(bookings: UserBooking[], now: Date): { next: UserBooking; isTomorrow: boolean } | null {
   const upcoming = getUpcomingBookings(bookings)
   if (upcoming.length === 0) return null
   const hasToday = upcoming.some((b) => isSameCalendarDayInZone(b.startsAt, now, DASHBOARD_BOOKINGS_TZ))
@@ -97,8 +93,36 @@ export function buildNoVisitsTodayReminder(bookings: UserBooking[], now = new Da
   const nextDay = startOfDayInTimeZone(new Date(next.startsAt), DASHBOARD_BOOKINGS_TZ)
   const tomorrow = startOfDayInTimeZone(new Date(now.getTime() + 86400000), DASHBOARD_BOOKINGS_TZ)
   const isTomorrow = nextDay.getTime() === tomorrow.getTime()
-  if (isTomorrow) {
-    return `No visits today — your next appointment is tomorrow (${formatNextVisit(next.startsAt)}).`
+  return { next, isTomorrow }
+}
+
+/**
+ * Friendly line when there are upcoming visits but none today (e.g. “How about tomorrow?”).
+ * Returns null if there is a visit today, no upcoming visits, or nothing to say.
+ */
+export function buildNoVisitsTodayReminder(bookings: UserBooking[], now = new Date()): string | null {
+  const ctx = noVisitsTodayContext(bookings, now)
+  if (!ctx) return null
+  if (ctx.isTomorrow) {
+    return `No visits today — your next appointment is tomorrow (${formatNextVisit(ctx.next.startsAt)}).`
   }
-  return `No visits today. Next up: ${formatNextVisit(next.startsAt)}.`
+  return `No visits today. Next up: ${formatNextVisit(ctx.next.startsAt)}.`
+}
+
+/**
+ * Premium empty-style module when the user has upcoming visits but none on the local calendar day.
+ */
+export function buildNoVisitsTodayEmptyState(bookings: UserBooking[], now = new Date()): BookingsEmptyStateModel | null {
+  const ctx = noVisitsTodayContext(bookings, now)
+  if (!ctx) return null
+  const when = formatNextVisit(ctx.next.startsAt)
+  const body = ctx.isTomorrow
+    ? `Nothing on your calendar today. Your next visit is tomorrow — ${when} (${ctx.next.treatmentName}).`
+    : `Nothing on your calendar today. Your next appointment is ${when} (${ctx.next.treatmentName}). Add another visit anytime.`
+  return {
+    headline: 'No visits today',
+    body,
+    primaryCta: { label: 'Book another visit', href: '/dashboard/book' },
+    secondaryCta: { label: 'View upcoming', onClickAction: 'upcoming' },
+  }
 }

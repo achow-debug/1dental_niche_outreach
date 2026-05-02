@@ -11,7 +11,7 @@ export function AuthorityBand() {
   ]
 
   return (
-    <div className="w-full bg-muted/30 border-y border-border/40 py-7">
+    <div className="w-full bg-muted/30 border-y border-border/40 py-5 md:py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap justify-center items-center gap-x-10 md:gap-x-14 gap-y-6 grayscale contrast-125 opacity-[0.55] hover:grayscale-0 hover:opacity-100 transition-all duration-500">
           <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] uppercase text-muted-foreground">

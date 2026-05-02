@@ -131,9 +131,6 @@
   * {
     @apply border-border outline-ring/50;
   }
-  html {
-    scroll-behavior: smooth;
-  }
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "ss01", "ss02", "cv01", "cv11";
@@ -165,7 +162,7 @@
   }
   
   .section-padding {
-    @apply py-20 md:py-32;
+    @apply py-10 md:py-20;
   }
   
   .hero-glow-bg {
@@ -271,7 +268,16 @@
   box-shadow: 0 24px 48px -12px oklch(0.2 0.02 260 / 0.12);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   .reveal-on-scroll,
   .magnetic-btn,
   .interactive-card-lift,
@@ -286,5 +292,11 @@
   .animate-blob,
   .animate-blob-reverse {
     animation: none;
+  }
+  .interactive-card-lift:hover,
+  .magnetic-btn:hover,
+  .fluid-action:hover,
+  .fluid-link:hover {
+    transform: none;
   }
 }

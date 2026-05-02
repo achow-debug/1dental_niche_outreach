@@ -93,17 +93,17 @@ export function SuitabilityChecker({ onBookClick }: SuitabilityCheckerProps) {
   return (
     <section className="section-padding bg-secondary/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 md:mb-16">
           <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-primary bg-primary/10 px-3 py-1 rounded-full mb-6 inline-block">
             Helpful guidance
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">Could this be right for you?</h2>
+          <h2 className="text-3xl md:text-5xl font-bold mb-6 tracking-tight">Could this be right for you?</h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             A quick, no-judgement check — toggle what feels true. We&apos;ll always confirm details in person.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-[300px_1fr] gap-12 items-start">
+        <div className="grid lg:grid-cols-[300px_1fr] gap-6 md:gap-8 items-start">
           <div className="flex flex-col gap-3">
             {treatments.map((t) => (
               <button
@@ -123,7 +123,7 @@ export function SuitabilityChecker({ onBookClick }: SuitabilityCheckerProps) {
             ))}
           </div>
 
-          <div className="glass-surface rounded-[2.5rem] p-8 md:p-12 border-none">
+          <div className="glass-surface rounded-[2.5rem] p-6 md:p-10 border-none">
             <h3 className="text-2xl font-bold mb-2 flex flex-wrap items-center gap-3">
               <span className="text-primary">{selectedTreatment.name}</span>
               <span className="text-foreground">— your snapshot</span>
@@ -181,7 +181,7 @@ export function SuitabilityChecker({ onBookClick }: SuitabilityCheckerProps) {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-10">
+            <div className="grid md:grid-cols-2 gap-6 md:gap-8">
               <div>
                 <h4 className="text-sm font-bold uppercase tracking-wider text-green-700 mb-4 flex items-center gap-2">
                   <Check className="w-4 h-4" /> Often a good match when…
@@ -215,7 +215,7 @@ export function SuitabilityChecker({ onBookClick }: SuitabilityCheckerProps) {
               </div>
             </div>
 
-            <div className="mt-12 pt-12 border-t border-border/50 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="mt-8 pt-8 border-t border-border/50 flex flex-col md:flex-row items-center justify-between gap-5 md:gap-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <Info className="w-6 h-6 text-primary" />

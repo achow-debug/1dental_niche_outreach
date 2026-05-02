@@ -59,8 +59,11 @@ export function LoginForm() {
         <CardContent className="space-y-4">
           {authError === 'auth' && (
             <Alert variant="destructive">
-              <AlertTitle>Could not confirm email</AlertTitle>
-              <AlertDescription>Try signing in again or request a new link.</AlertDescription>
+              <AlertTitle>Could not complete sign-in</AlertTitle>
+              <AlertDescription>
+                The sign-in link may have expired or already been used. Try your password, or open a fresh link from
+                your email.
+              </AlertDescription>
             </Alert>
           )}
           {error && (

@@ -35,17 +35,20 @@ const reasons = [
 
 export function WhyChooseUs() {
   return (
-    <section id="why-us" className="section-padding bg-background relative overflow-hidden">
+    <section
+      id="why-us"
+      className="section-padding scroll-mt-28 md:scroll-mt-32 bg-background relative overflow-hidden"
+    >
       {/* Subtle background element */}
       <div className="absolute top-1/2 left-0 -translate-y-1/2 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-x-1/2" />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-20 animate-fade-in-up">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10 md:mb-14 animate-fade-in-up">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full mb-4">
               <span className="text-[10px] font-bold tracking-widest uppercase text-primary">Patient Experience</span>
             </div>
-            <h2 className="text-editorial text-4xl md:text-5xl lg:text-6xl font-bold text-foreground">
+            <h2 className="text-editorial text-3xl md:text-5xl lg:text-6xl font-bold text-foreground">
               Modern private care <br />
               <span className="text-primary italic">tailored to you.</span>
             </h2>
