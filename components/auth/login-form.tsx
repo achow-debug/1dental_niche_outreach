@@ -16,11 +16,12 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { sanitizeRedirectPath } from '@/lib/auth/safe-redirect'
 
 export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirect') ?? '/dashboard'
+  const redirectTo = sanitizeRedirectPath(searchParams.get('redirect'))
   const authError = searchParams.get('error')
 
   const [email, setEmail] = useState('')

@@ -1,6 +1,6 @@
 # 1dental_niche_outreach
 
-A **Next.js** marketing site for a private dental practice: long-form landing content (hero, treatments, social proof, pricing, FAQs), interactive sections (smile quiz, suitability checker, booking flow), and legal/accessibility pages. The current build targets **Carter Dental Studio** (Manchester); copy and metadata live in components and `app/layout.tsx`.
+A **Next.js** landing page for a private dental practice: long-form landing content (hero, treatments, social proof, pricing, FAQs), interactive sections (smile quiz, suitability checker, booking flow), and legal/accessibility pages. The current build targets **Carter Dental Studio** (Manchester); copy and metadata live in components and `app/layout.tsx`.
 
 Originally scaffolded with [v0](https://v0.app); day-to-day development is standard Next.js in this repo.
 

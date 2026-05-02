@@ -12,7 +12,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
             <span className="text-xs text-muted-foreground">Your account</span>
           </div>
           <Link href="/" className="text-sm text-muted-foreground hover:text-primary">
-            Marketing site
+            Landing page
           </Link>
         </div>
       </header>
