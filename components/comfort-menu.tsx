@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import { MARKETING_IMAGES } from "@/lib/marketing-placeholders"
 import { Headphones, Coffee, Wind, Utensils, Music, ConciergeBell } from "lucide-react"
 
 const amenities = [
@@ -68,7 +69,7 @@ export function ComfortMenu() {
         <div className="grid lg:grid-cols-2 gap-10 items-stretch mb-16">
           <div className="relative min-h-[280px] lg:min-h-[360px] rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/20 interactive-card-lift">
             <Image
-              src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&q=80&w=1600"
+              src={MARKETING_IMAGES.clinicInterior}
               alt="Calm reception lounge with soft seating and natural light"
               fill
               className="object-cover"

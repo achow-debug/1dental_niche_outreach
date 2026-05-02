@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { MARKETING_IMAGES } from "@/lib/marketing-placeholders"
 
 export function BackgroundVideo() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -21,7 +22,7 @@ export function BackgroundVideo() {
         loop
         playsInline
         className="w-full h-full object-cover opacity-30 grayscale-[0.2] brightness-110"
-        poster="/images/clinic-interior.jpg"
+        poster={MARKETING_IMAGES.clinicInterior}
       >
         <source src="https://assets.mixkit.co/videos/preview/mixkit-dentist-examining-a-patient-4458-large.mp4" type="video/mp4" />
         Your browser does not support the video tag.

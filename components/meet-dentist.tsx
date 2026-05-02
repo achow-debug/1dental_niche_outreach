@@ -1,4 +1,5 @@
 import Image from "next/image"
+import { MARKETING_IMAGES } from "@/lib/marketing-placeholders"
 import { Award, GraduationCap, Heart, Users } from "lucide-react"
 
 const credentials = [
@@ -17,7 +18,7 @@ export function MeetDentist() {
           <div className="relative order-2 lg:order-1">
             <div className="aspect-[3/4] rounded-3xl overflow-hidden bg-muted max-w-md mx-auto lg:mx-0 shadow-xl">
               <Image
-                src="/images/dr-carter.jpg"
+                src={MARKETING_IMAGES.dentistProfessional}
                 alt="Dr. Amelia Carter, Founder and Lead Dentist at Carter Dental Studio"
                 fill
                 sizes="(max-width: 1024px) 100vw, 28rem"

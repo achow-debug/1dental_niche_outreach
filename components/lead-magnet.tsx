@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { FileText, ArrowRight, CheckCircle2 } from "lucide-react"
 import Image from "next/image"
+import { MARKETING_IMAGES } from "@/lib/marketing-placeholders"
 
 export function LeadMagnet() {
   return (
@@ -62,7 +63,7 @@ export function LeadMagnet() {
             <div className="relative group">
               <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl transition-transform duration-500 group-hover:scale-[1.02]">
                 <Image
-                  src="/images/clinic-interior.jpg" 
+                  src={MARKETING_IMAGES.clinicInterior}
                   alt="Carter Dental Studio Patient Information Guide"
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"

@@ -1,6 +1,8 @@
 "use client"
 
+import Image from "next/image"
 import { Star, Quote } from "lucide-react"
+import { BEFORE_AFTER_PLACEHOLDER_PAIRS } from "@/lib/marketing-placeholders"
 import { VideoTestimonialGrid } from "@/components/video-testimonial-grid"
 
 const testimonials = [
@@ -124,29 +126,50 @@ export function SocialProof() {
             Results that feel as good as they look
           </h3>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {results.map((result, index) => (
-              <div
-                key={index}
-                className="bg-card rounded-2xl overflow-hidden border border-border"
-              >
-                {/* Before/After visual placeholder */}
-                <div className="aspect-[4/3] bg-gradient-to-br from-accent to-muted flex items-center justify-center">
-                  <div className="text-center px-4">
-                    <div className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                      <span className="px-2 py-1 bg-card/80 rounded">Before</span>
-                      <span>→</span>
-                      <span className="px-2 py-1 bg-primary/10 rounded text-primary">After</span>
+            {results.map((result, index) => {
+              const pair = BEFORE_AFTER_PLACEHOLDER_PAIRS[index % BEFORE_AFTER_PLACEHOLDER_PAIRS.length]
+              return (
+                <div
+                  key={index}
+                  className="bg-card rounded-2xl overflow-hidden border border-border"
+                >
+                  <div className="relative aspect-[4/3] grid grid-cols-2 gap-px bg-border">
+                    <div className="relative min-h-0 bg-muted">
+                      <Image
+                        src={pair.before}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 50vw, 12rem"
+                        unoptimized
+                      />
+                      <span className="absolute bottom-2 left-2 rounded bg-background/85 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-foreground backdrop-blur-sm">
+                        Before
+                      </span>
+                    </div>
+                    <div className="relative min-h-0 bg-muted">
+                      <Image
+                        src={pair.after}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 50vw, 12rem"
+                        unoptimized
+                      />
+                      <span className="absolute bottom-2 right-2 rounded bg-primary/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground backdrop-blur-sm">
+                        After
+                      </span>
                     </div>
                   </div>
+                  <div className="p-5">
+                    <h4 className="font-semibold text-foreground mb-2">{result.title}</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {result.description}
+                    </p>
+                  </div>
                 </div>
-                <div className="p-5">
-                  <h4 className="font-semibold text-foreground mb-2">{result.title}</h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {result.description}
-                  </p>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 

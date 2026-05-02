@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import { MARKETING_IMAGES } from "@/lib/marketing-placeholders"
 import { Sparkles } from "lucide-react"
 
 export function OurPromise() {
@@ -11,14 +12,11 @@ export function OurPromise() {
           <div className="relative group">
             <div className="relative aspect-[3/4] rounded-[3rem] overflow-hidden shadow-2xl z-10">
               <Image
-                src="/images/dr-carter-portrait.jpg"
+                src={MARKETING_IMAGES.dentistPortrait}
                 alt="Dr. Amelia Carter, Lead Dentist at Carter Dental Studio"
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 className="object-cover hover:scale-105 transition-transform duration-1000"
-                onError={(e) => {
-                  e.currentTarget.src = "https://images.unsplash.com/photo-1559839734-2b71f1e3c770?auto=format&fit=crop&q=80&w=1000"
-                }}
               />
             </div>
             {/* Decorative elements */}

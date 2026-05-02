@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { Bell, CalendarCheck2, LogOut, Settings, User, X } from 'lucide-react'
+import { Bell, CalendarCheck2, Home, LogOut, Settings, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getProfileInitialLetter } from '@/lib/profile-initial'
@@ -95,6 +95,12 @@ export function DashboardAccountMenu({ email, fullName, avatarUrl }: AccountMenu
             <Link href="/dashboard/profile">
               <User className="mr-2 size-4 shrink-0" />
               My profile
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className="min-h-11 cursor-pointer rounded-lg px-3 py-2.5 text-[15px] sm:text-sm">
+            <Link href="/">
+              <Home className="mr-2 size-4 shrink-0" />
+              Back to landing page
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator className="my-1.5" />

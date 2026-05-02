@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
+import { MARKETING_IMAGES } from "@/lib/marketing-placeholders"
 import { Button } from "@/components/ui/button"
 import { BackgroundVideo } from "@/components/background-video"
 import { Shield, Clock, Heart, Sparkles, Award } from "lucide-react"
@@ -104,7 +105,7 @@ export function Hero({ onBookClick, onLearnMoreClick }: HeroProps) {
           >
             <div className="relative aspect-[4/5] md:aspect-square rounded-[2rem] md:rounded-[4rem] overflow-hidden bg-muted shadow-2xl rotate-1 md:rotate-2 hover:rotate-0 transition-transform duration-700">
               <Image
-                src="/images/clinic-interior.jpg"
+                src={MARKETING_IMAGES.clinicInterior}
                 alt="Modern, bright Carter Dental Studio interior with contemporary equipment and calming atmosphere"
                 fill
                 sizes="(max-width: 1024px) 100vw, 45vw"

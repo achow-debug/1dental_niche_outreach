@@ -106,7 +106,7 @@ export function DashboardShell({ email, fullName, avatarUrl, notifications, chil
           <div className="flex flex-col gap-3 px-4 py-3 sm:px-6">
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
-                <SidebarTrigger className="hidden h-9 w-9 shrink-0 rounded-md border border-border/70 md:inline-flex" />
+                <SidebarTrigger className="inline-flex h-9 w-9 shrink-0 rounded-lg border border-border/50 bg-background/65 text-foreground shadow-sm backdrop-blur-md transition hover:bg-background/80 motion-safe:active:scale-[0.98]" />
                 <span className="truncate text-sm font-semibold">Dashboard</span>
               </div>
               <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
@@ -138,8 +138,9 @@ export function DashboardShell({ email, fullName, avatarUrl, notifications, chil
           </div>
         </header>
         <SidebarTrigger
-          className="fixed right-4 z-30 h-10 w-10 rounded-full border border-border/70 bg-background/95 shadow-sm md:hidden"
+          className="fixed right-3 z-[26] flex h-11 w-11 rounded-full border border-border/45 bg-background/55 text-foreground shadow-md backdrop-blur-md transition hover:bg-background/72 motion-safe:active:scale-95 md:hidden"
           style={{ bottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+          aria-label="Open navigation menu"
         />
         <main className="px-4 py-6 pb-24 sm:px-6 md:pb-6">{children}</main>
       </SidebarInset>
