@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { prefersReducedMotion } from '@/lib/prefers-reduced-motion'
 import { Header } from '@/components/header'
@@ -19,6 +19,8 @@ import { HowItWorks } from '@/components/how-it-works'
 import { MeetDentist } from '@/components/meet-dentist'
 import { FAQSection } from '@/components/faq-section'
 import { PricingSection } from '@/components/pricing-section'
+import { BookingLeadCalendlyModal } from '@/components/booking-lead-calendly-modal'
+import { BookCallSection } from '@/components/book-call-section'
 import { FinalCTA } from '@/components/final-cta'
 import { Footer } from '@/components/footer'
 import { LandingBackToTop } from '@/components/landing-back-to-top'
@@ -27,10 +29,13 @@ import { ScrollReveal } from '@/components/scroll-reveal'
 import { SuitabilityChecker } from '@/components/suitability-checker'
 import type { LandingCatalogItem } from '@/lib/landing/load-public-catalog'
 import type { LandingBookClickHandler } from '@/lib/landing/book-cta'
+import type { CalendlyEmbedRuntimeConfig } from '@/lib/calendly/embed-config'
 
 type Props = {
   isLoggedIn: boolean
   catalogItems: LandingCatalogItem[]
+  initialSchedulingOpen?: boolean
+  calendlyEmbed: CalendlyEmbedRuntimeConfig
 }
 
 function bookDestinationPath(treatmentSlug?: string): string {
@@ -40,8 +45,14 @@ function bookDestinationPath(treatmentSlug?: string): string {
   return '/dashboard/book'
 }
 
-export function LandingHomeClient({ isLoggedIn, catalogItems }: Props) {
+export function LandingHomeClient({
+  isLoggedIn,
+  catalogItems,
+  initialSchedulingOpen = false,
+  calendlyEmbed,
+}: Props) {
   const router = useRouter()
+  const [schedulingOpen, setSchedulingOpen] = useState(initialSchedulingOpen)
 
   const handleBookClick = useCallback<LandingBookClickHandler>(
     (treatmentSlug) => {
@@ -61,13 +72,17 @@ export function LandingHomeClient({ isLoggedIn, catalogItems }: Props) {
     section?.scrollIntoView({ behavior })
   }
 
+  const openSchedulingModal = useCallback(() => {
+    setSchedulingOpen(true)
+  }, [])
+
   return (
     <main
       id="main-content"
       tabIndex={-1}
       className="relative z-[1] min-h-screen bg-background text-foreground outline-none selection:bg-primary/20"
     >
-      <Header onBookClick={handleBookClick} />
+      <Header onBookClick={handleBookClick} onOpenSchedulingModal={openSchedulingModal} />
 
       <Hero onBookClick={handleBookClick} onLearnMoreClick={handleLearnMoreClick} />
 
@@ -130,16 +145,26 @@ export function LandingHomeClient({ isLoggedIn, catalogItems }: Props) {
       </ScrollReveal>
 
       <ScrollReveal>
+        <BookCallSection onOpenSchedulingModal={openSchedulingModal} />
+      </ScrollReveal>
+
+      <ScrollReveal>
         <FinalCTA onBookClick={handleBookClick} />
       </ScrollReveal>
 
-      <Footer onBookClick={handleBookClick} />
+      <Footer onBookClick={handleBookClick} onOpenSchedulingModal={openSchedulingModal} />
 
       <MobilestickyCTA onBookClick={handleBookClick} />
 
       <LandingBackToTop />
 
       <div className="h-14 md:hidden" aria-hidden="true" />
+
+      <BookingLeadCalendlyModal
+        open={schedulingOpen}
+        onOpenChange={setSchedulingOpen}
+        calendly={calendlyEmbed}
+      />
     </main>
   )
 }

@@ -16,9 +16,10 @@ const navLinks = [
 
 interface HeaderProps {
   onBookClick: () => void
+  onOpenSchedulingModal: () => void
 }
 
-export function Header({ onBookClick }: HeaderProps) {
+export function Header({ onBookClick, onOpenSchedulingModal }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -30,6 +31,11 @@ export function Header({ onBookClick }: HeaderProps) {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  const openScheduling = () => {
+    setIsMobileMenuOpen(false)
+    onOpenSchedulingModal()
+  }
+
   return (
     <header
       className={`fixed top-4 left-4 right-4 z-50 transition-all duration-500 rounded-2xl md:mx-auto md:max-w-5xl ${
@@ -39,29 +45,29 @@ export function Header({ onBookClick }: HeaderProps) {
       }`}
     >
       <div className="px-4 sm:px-6">
-        <div className="flex items-center justify-between h-14 md:h-16">
+        <div className="flex items-center justify-between h-14 md:h-16 gap-2">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
+          <Link href="/" className="flex items-center gap-3 group shrink-0 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center transition-transform group-hover:scale-105">
               <span className="text-primary font-bold text-lg">C</span>
             </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-foreground text-base tracking-tight leading-none">
+            <div className="flex flex-col min-w-0">
+              <span className="font-bold text-foreground text-base tracking-tight leading-none truncate">
                 Carter Dental
               </span>
-              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-0.5">
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold mt-0.5 truncate">
                 Studio • Manchester
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-10">
+          <nav className="hidden md:flex items-center gap-4 lg:gap-7 xl:gap-8 shrink min-w-0 overflow-x-auto">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-muted-foreground hover:text-primary transition-all text-sm font-medium tracking-wide relative group"
+                className="text-muted-foreground hover:text-primary transition-all text-sm font-medium tracking-wide relative group whitespace-nowrap"
               >
                 {link.label}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary/40 transition-all group-hover:w-full" />
@@ -69,19 +75,36 @@ export function Header({ onBookClick }: HeaderProps) {
             ))}
           </nav>
 
-          {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-10">
+          {/* Desktop CTAs */}
+          <div className="hidden md:flex items-center gap-2 shrink-0">
             <HeaderAuthSection variant="desktop" />
-            <Button 
-              onClick={onBookClick}
+            <Button
+              type="button"
+              onClick={openScheduling}
+              variant="outline"
+              className="h-11 px-4 text-sm whitespace-nowrap"
+            >
+              Request demo
+            </Button>
+            <Button
+              type="button"
+              onClick={openScheduling}
               variant="cta"
-              className="h-11 px-7 text-sm"
+              className="h-11 px-4 text-sm whitespace-nowrap"
+            >
+              Book website audit
+            </Button>
+            <Button
+              type="button"
+              onClick={onBookClick}
+              variant="ghost"
+              className="h-11 px-3 text-sm text-muted-foreground hover:text-foreground whitespace-nowrap"
             >
               Book a visit
             </Button>
           </div>
 
-          {/* Mobile: profile avatar (signed-in) + hamburger — kept separate for clarity */}
+          {/* Mobile: profile + hamburger */}
           <div className="flex items-center gap-1.5 md:hidden">
             <HeaderAuthSection variant="mobile-toolbar" onNavigate={() => setIsMobileMenuOpen(false)} />
             <button
@@ -112,13 +135,30 @@ export function Header({ onBookClick }: HeaderProps) {
               </Link>
             ))}
             <HeaderAuthSection variant="mobile-drawer" onNavigate={() => setIsMobileMenuOpen(false)} />
-            <Button 
+            <Button
+              type="button"
+              onClick={openScheduling}
+              variant="outline"
+              className="mt-2 h-12 w-full rounded-2xl text-base"
+            >
+              Request demo
+            </Button>
+            <Button
+              type="button"
+              onClick={openScheduling}
+              variant="cta"
+              className="h-14 w-full rounded-2xl text-base shadow-lg shadow-primary/20"
+            >
+              Book website audit
+            </Button>
+            <Button
+              type="button"
               onClick={() => {
                 setIsMobileMenuOpen(false)
                 onBookClick()
               }}
-              variant="cta"
-              className="mt-4 h-14 w-full rounded-2xl text-base shadow-lg shadow-primary/20"
+              variant="ghost"
+              className="h-12 w-full rounded-2xl text-base text-muted-foreground"
             >
               Book a visit
             </Button>

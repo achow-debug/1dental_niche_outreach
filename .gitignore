@@ -10,7 +10,7 @@ next.user-config.*
 # Environment variables
 .env*.local
 .env folder/
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6bnl5emRudmJnZmVwZ3dicXBpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjQzMzQwOCwiZXhwIjoyMDkyMDA5NDA4fQ.eEOwZKzVg9aBJNs9A7qjF05BaRbe5TcBLJdTy2kGDLQ
+.env.local
 
 # Common ignores
 node_modules

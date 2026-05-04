@@ -6,6 +6,7 @@ import { MapPin, Phone, Mail, Clock, Instagram, Facebook, Linkedin } from "lucid
 
 interface FooterProps {
   onBookClick: () => void
+  onOpenSchedulingModal: () => void
 }
 
 const navLinks = [
@@ -23,7 +24,7 @@ const legalLinks = [
   { label: "Accessibility", href: "/accessibility" },
 ]
 
-export function Footer({ onBookClick }: FooterProps) {
+export function Footer({ onBookClick, onOpenSchedulingModal }: FooterProps) {
   return (
     <footer className="bg-card border-t border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
@@ -47,13 +48,22 @@ export function Footer({ onBookClick }: FooterProps) {
               Modern private dental care that feels calm, clear, and easy to book. 
               Serving Manchester with a patient-first approach.
             </p>
-            <Button 
-              onClick={onBookClick}
-              variant="cta"
-              className="h-12 px-8 font-bold shadow-lg shadow-primary/20"
-            >
-              Book a visit
-            </Button>
+            <div className="flex flex-col gap-2 sm:max-w-xs">
+              <Button
+                type="button"
+                onClick={onOpenSchedulingModal}
+                variant="cta"
+                className="h-12 px-8 font-bold shadow-lg shadow-primary/20"
+              >
+                Book website audit
+              </Button>
+              <Button type="button" onClick={onOpenSchedulingModal} variant="outline" className="h-11 px-6">
+                Request demo
+              </Button>
+              <Button onClick={onBookClick} variant="ghost" className="h-11 px-6 text-muted-foreground">
+                Book a visit
+              </Button>
+            </div>
           </div>
 
           {/* Navigation */}
@@ -70,6 +80,23 @@ export function Footer({ onBookClick }: FooterProps) {
                   </Link>
                 </li>
               ))}
+              <li>
+                <button
+                  type="button"
+                  onClick={onOpenSchedulingModal}
+                  className="text-left text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Book website audit
+                </button>
+              </li>
+              <li>
+                <Link
+                  href="/book-a-call"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Open scheduling page
+                </Link>
+              </li>
             </ul>
           </div>
 
