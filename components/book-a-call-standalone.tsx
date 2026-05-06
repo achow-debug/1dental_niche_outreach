@@ -6,12 +6,14 @@ import { useRouter } from 'next/navigation'
 
 import { BookingLeadCalendlyModal } from '@/components/booking-lead-calendly-modal'
 import type { CalendlyEmbedRuntimeConfig } from '@/lib/calendly/embed-config'
+import type { LeadSchedulingIntent } from '@/lib/calendly/lead-questions'
 
 type Props = {
   calendlyEmbed: CalendlyEmbedRuntimeConfig
+  intent?: LeadSchedulingIntent
 }
 
-export function BookACallStandalone({ calendlyEmbed }: Props) {
+export function BookACallStandalone({ calendlyEmbed, intent = 'demo' }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(true)
 
@@ -42,7 +44,12 @@ export function BookACallStandalone({ calendlyEmbed }: Props) {
           home.
         </p>
       </div>
-      <BookingLeadCalendlyModal open={open} onOpenChange={handleOpenChange} calendly={calendlyEmbed} />
+      <BookingLeadCalendlyModal
+        open={open}
+        onOpenChange={handleOpenChange}
+        calendly={calendlyEmbed}
+        intent={intent}
+      />
     </main>
   )
 }

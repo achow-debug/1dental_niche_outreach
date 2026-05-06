@@ -1,6 +1,11 @@
+export type LeadSchedulingIntent = 'website_audit' | 'demo'
+
 export type LeadFormState = {
   fullName: string
   email: string
+  gdprAccepted: boolean
+  /** Bot trap — must stay empty */
+  honeypot: string
   goal: string
   traffic: string
   liveSite: string
@@ -11,6 +16,8 @@ export type LeadFormState = {
 export const emptyLeadForm = (): LeadFormState => ({
   fullName: '',
   email: '',
+  gdprAccepted: false,
+  honeypot: '',
   goal: '',
   traffic: '',
   liveSite: '',
@@ -28,7 +35,46 @@ export type LeadQuestionStep = {
   multiline?: boolean
 }
 
-/** Up to five qualification steps after name/email (before Calendly). */
+/** Three qualification steps for “Book website audit” (before Calendly). */
+export const AUDIT_LEAD_QUESTION_STEPS: LeadQuestionStep[] = [
+  {
+    field: 'goal',
+    headline: 'What is the main outcome you want from the website audit?',
+    description: 'We will tailor the review and call around this.',
+    options: [
+      { value: 'conversions', label: 'Improve conversions & UX' },
+      { value: 'seo', label: 'SEO & organic visibility' },
+      { value: 'performance', label: 'Performance, Core Web Vitals & tech health' },
+      { value: 'roadmap', label: 'Roadmap for a redesign or rebuild' },
+      { value: 'unsure', label: 'Not sure yet — want your recommendations' },
+    ],
+  },
+  {
+    field: 'liveSite',
+    headline: 'What is your current website situation?',
+    options: [
+      { value: 'yes-public', label: 'Live public site' },
+      { value: 'staging', label: 'Staging / coming soon only' },
+      { value: 'no', label: 'No site yet' },
+    ],
+  },
+  {
+    field: 'timeline',
+    headline: 'When are you hoping to act on the audit findings?',
+    options: [
+      { value: 'asap', label: 'As soon as possible' },
+      { value: '1-3mo', label: 'In the next 1–3 months' },
+      { value: '3mo-plus', label: 'In 3+ months' },
+      { value: 'exploring', label: 'Just exploring options' },
+    ],
+  },
+]
+
+export function getLeadQuestionSteps(intent: LeadSchedulingIntent): LeadQuestionStep[] {
+  return intent === 'website_audit' ? AUDIT_LEAD_QUESTION_STEPS : LEAD_QUESTION_STEPS
+}
+
+/** Up to five qualification steps after name/email (before Calendly) — “Request demo”. */
 export const LEAD_QUESTION_STEPS: LeadQuestionStep[] = [
   {
     field: 'goal',

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { HeaderAuthSection } from "@/components/header-auth-section"
+import type { LeadSchedulingIntent } from "@/lib/calendly/lead-questions"
 import { Menu, X } from "lucide-react"
 
 const navLinks = [
@@ -16,7 +17,7 @@ const navLinks = [
 
 interface HeaderProps {
   onBookClick: () => void
-  onOpenSchedulingModal: () => void
+  onOpenSchedulingModal: (intent: LeadSchedulingIntent) => void
 }
 
 export function Header({ onBookClick, onOpenSchedulingModal }: HeaderProps) {
@@ -31,9 +32,9 @@ export function Header({ onBookClick, onOpenSchedulingModal }: HeaderProps) {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const openScheduling = () => {
+  const openScheduling = (intent: LeadSchedulingIntent) => {
     setIsMobileMenuOpen(false)
-    onOpenSchedulingModal()
+    onOpenSchedulingModal(intent)
   }
 
   return (
@@ -80,7 +81,7 @@ export function Header({ onBookClick, onOpenSchedulingModal }: HeaderProps) {
             <HeaderAuthSection variant="desktop" />
             <Button
               type="button"
-              onClick={openScheduling}
+              onClick={() => openScheduling("demo")}
               variant="outline"
               className="h-11 px-4 text-sm whitespace-nowrap"
             >
@@ -88,7 +89,7 @@ export function Header({ onBookClick, onOpenSchedulingModal }: HeaderProps) {
             </Button>
             <Button
               type="button"
-              onClick={openScheduling}
+              onClick={() => openScheduling("website_audit")}
               variant="cta"
               className="h-11 px-4 text-sm whitespace-nowrap"
             >
@@ -137,7 +138,7 @@ export function Header({ onBookClick, onOpenSchedulingModal }: HeaderProps) {
             <HeaderAuthSection variant="mobile-drawer" onNavigate={() => setIsMobileMenuOpen(false)} />
             <Button
               type="button"
-              onClick={openScheduling}
+              onClick={() => openScheduling("demo")}
               variant="outline"
               className="mt-2 h-12 w-full rounded-2xl text-base"
             >
@@ -145,7 +146,7 @@ export function Header({ onBookClick, onOpenSchedulingModal }: HeaderProps) {
             </Button>
             <Button
               type="button"
-              onClick={openScheduling}
+              onClick={() => openScheduling("website_audit")}
               variant="cta"
               className="h-14 w-full rounded-2xl text-base shadow-lg shadow-primary/20"
             >

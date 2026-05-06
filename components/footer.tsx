@@ -2,11 +2,12 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import type { LeadSchedulingIntent } from "@/lib/calendly/lead-questions"
 import { MapPin, Phone, Mail, Clock, Instagram, Facebook, Linkedin } from "lucide-react"
 
 interface FooterProps {
   onBookClick: () => void
-  onOpenSchedulingModal: () => void
+  onOpenSchedulingModal: (intent: LeadSchedulingIntent) => void
 }
 
 const navLinks = [
@@ -51,13 +52,18 @@ export function Footer({ onBookClick, onOpenSchedulingModal }: FooterProps) {
             <div className="flex flex-col gap-2 sm:max-w-xs">
               <Button
                 type="button"
-                onClick={onOpenSchedulingModal}
+                onClick={() => onOpenSchedulingModal("website_audit")}
                 variant="cta"
                 className="h-12 px-8 font-bold shadow-lg shadow-primary/20"
               >
                 Book website audit
               </Button>
-              <Button type="button" onClick={onOpenSchedulingModal} variant="outline" className="h-11 px-6">
+              <Button
+                type="button"
+                onClick={() => onOpenSchedulingModal("demo")}
+                variant="outline"
+                className="h-11 px-6"
+              >
                 Request demo
               </Button>
               <Button onClick={onBookClick} variant="ghost" className="h-11 px-6 text-muted-foreground">
@@ -83,7 +89,7 @@ export function Footer({ onBookClick, onOpenSchedulingModal }: FooterProps) {
               <li>
                 <button
                   type="button"
-                  onClick={onOpenSchedulingModal}
+                  onClick={() => onOpenSchedulingModal("website_audit")}
                   className="text-left text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Book website audit

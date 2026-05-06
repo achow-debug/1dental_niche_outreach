@@ -1,5 +1,5 @@
-import type { LeadFormState } from '@/lib/calendly/lead-questions'
-import { LEAD_QUESTION_STEPS, labelForOption } from '@/lib/calendly/lead-questions'
+import type { LeadFormState, LeadQuestionStep } from '@/lib/calendly/lead-questions'
+import { labelForOption } from '@/lib/calendly/lead-questions'
 import type { CalendlyPrefill } from '@/lib/calendly/calendly-types'
 
 function readSummaryQuestionId(): string | undefined {
@@ -16,9 +16,9 @@ function splitName(fullName: string): { firstName?: string; lastName?: string } 
 }
 
 /** Human-readable block for hosts (and optional Calendly custom question). */
-export function formatLeadSummary(lead: LeadFormState): string {
+export function formatLeadSummary(lead: LeadFormState, steps: LeadQuestionStep[]): string {
   const lines: string[] = ['--- From website lead form ---']
-  LEAD_QUESTION_STEPS.forEach((step, i) => {
+  steps.forEach((step, i) => {
     const value = lead[step.field]
     if (!value?.trim()) return
     if (step.multiline) {
@@ -36,7 +36,10 @@ export function formatLeadSummary(lead: LeadFormState): string {
  * question in Calendly: set `NEXT_PUBLIC_CALENDLY_SUMMARY_CUSTOM_QUESTION_ID` to that question’s
  * UUID from the embed inspector / Calendly docs so this text appears in the widget.
  */
-export function buildCalendlyPrefillFromLead(lead: LeadFormState): CalendlyPrefill {
+export function buildCalendlyPrefillFromLead(
+  lead: LeadFormState,
+  steps: LeadQuestionStep[],
+): CalendlyPrefill {
   const name = lead.fullName.trim()
   const email = lead.email.trim()
   const { firstName, lastName } = splitName(name)
@@ -50,7 +53,7 @@ export function buildCalendlyPrefillFromLead(lead: LeadFormState): CalendlyPrefi
 
   const summaryId = readSummaryQuestionId()
   if (summaryId) {
-    const summary = formatLeadSummary(lead)
+    const summary = formatLeadSummary(lead, steps)
     prefill.customAnswers = { [summaryId]: summary }
   }
 

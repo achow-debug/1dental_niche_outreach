@@ -3,9 +3,10 @@
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
+import type { LeadSchedulingIntent } from '@/lib/calendly/lead-questions'
 
 type Props = {
-  onOpenSchedulingModal: () => void
+  onOpenSchedulingModal: (intent: LeadSchedulingIntent) => void
 }
 
 export function BookCallSection({ onOpenSchedulingModal }: Props) {
@@ -30,10 +31,20 @@ export function BookCallSection({ onOpenSchedulingModal }: Props) {
           dedicated page? Use the link below.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
-          <Button type="button" variant="outline" className="h-12 px-8" onClick={onOpenSchedulingModal}>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-12 px-8"
+            onClick={() => onOpenSchedulingModal('demo')}
+          >
             Request demo
           </Button>
-          <Button type="button" variant="cta" className="h-12 px-8" onClick={onOpenSchedulingModal}>
+          <Button
+            type="button"
+            variant="cta"
+            className="h-12 px-8"
+            onClick={() => onOpenSchedulingModal('website_audit')}
+          >
             Book website audit
           </Button>
           <Button variant="ghost" className="h-12 text-muted-foreground underline-offset-4 hover:underline" asChild>

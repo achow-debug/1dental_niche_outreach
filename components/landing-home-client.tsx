@@ -30,11 +30,13 @@ import { SuitabilityChecker } from '@/components/suitability-checker'
 import type { LandingCatalogItem } from '@/lib/landing/load-public-catalog'
 import type { LandingBookClickHandler } from '@/lib/landing/book-cta'
 import type { CalendlyEmbedRuntimeConfig } from '@/lib/calendly/embed-config'
+import type { LeadSchedulingIntent } from '@/lib/calendly/lead-questions'
 
 type Props = {
   isLoggedIn: boolean
   catalogItems: LandingCatalogItem[]
   initialSchedulingOpen?: boolean
+  initialSchedulingIntent?: LeadSchedulingIntent
   calendlyEmbed: CalendlyEmbedRuntimeConfig
 }
 
@@ -49,10 +51,13 @@ export function LandingHomeClient({
   isLoggedIn,
   catalogItems,
   initialSchedulingOpen = false,
+  initialSchedulingIntent = 'demo',
   calendlyEmbed,
 }: Props) {
   const router = useRouter()
   const [schedulingOpen, setSchedulingOpen] = useState(initialSchedulingOpen)
+  const [schedulingIntent, setSchedulingIntent] =
+    useState<LeadSchedulingIntent>(initialSchedulingIntent)
 
   const handleBookClick = useCallback<LandingBookClickHandler>(
     (treatmentSlug) => {
@@ -72,7 +77,8 @@ export function LandingHomeClient({
     section?.scrollIntoView({ behavior })
   }
 
-  const openSchedulingModal = useCallback(() => {
+  const openSchedulingModal = useCallback((intent: LeadSchedulingIntent) => {
+    setSchedulingIntent(intent)
     setSchedulingOpen(true)
   }, [])
 
@@ -164,6 +170,7 @@ export function LandingHomeClient({
         open={schedulingOpen}
         onOpenChange={setSchedulingOpen}
         calendly={calendlyEmbed}
+        intent={schedulingIntent}
       />
     </main>
   )
