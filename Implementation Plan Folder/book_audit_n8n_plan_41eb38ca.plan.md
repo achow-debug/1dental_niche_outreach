@@ -20,6 +20,8 @@ todos:
 isProject: false
 ---
 
+**Status (May 2026):** Archived snapshot. Calendly has been removed from the app; the live spec is [book_website_audit_n8n_webhook_plan.md](book_website_audit_n8n_webhook_plan.md) (`components/booking-lead-modal.tsx`, `lib/leads/`, `/api/leads/*`).
+
 # Book website audit form → n8n webhook (implementation plan)
 
 **Target doc (to add in repo):** [Implementation Plan Folder/book_website_audit_n8n_webhook_plan.md](Implementation%20Plan%20Folder/book_website_audit_n8n_webhook_plan.md)
@@ -32,7 +34,7 @@ This plan aligns with the current stack: the scheduling flow lives in [`componen
 
 - **Book website audit** and **Request demo** open the **same** modal and **same** question sequence (step 0: name/email; steps 1–5: five `LEAD_QUESTION_STEPS`; step 6: Calendly).
 - There is **no** public “generic webhook” API route yet; existing [`app/api/...`](app/api) routes are admin/dashboard oriented.
-- Calendly-only GDPR banner is already an env concern (`NEXT_PUBLIC_CALENDLY_HIDE_GDPR_BANNER` in [`.env.local.example`](.env.local.example)); **on-site** GDPR consent is separate and should be explicit for your n8n payload.
+- Calendly-only GDPR banner is already an env concern (`NEXT_PUBLIC_CALENDLY_HIDE_GDPR_BANNER` in [`.example`](.env.local.example)); **on-site** GDPR consent is separate and should be explicit for your n8n payload.
 
 ---
 

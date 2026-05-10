@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import type { LeadSchedulingIntent } from "@/lib/calendly/lead-questions"
+import type { LeadSchedulingIntent } from "@/lib/leads/lead-questions"
 import { MapPin, Phone, Mail, Clock, Instagram, Facebook, Linkedin } from "lucide-react"
 
 interface FooterProps {

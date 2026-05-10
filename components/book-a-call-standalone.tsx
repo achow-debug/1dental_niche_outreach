@@ -4,16 +4,14 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { BookingLeadCalendlyModal } from '@/components/booking-lead-calendly-modal'
-import type { CalendlyEmbedRuntimeConfig } from '@/lib/calendly/embed-config'
-import type { LeadSchedulingIntent } from '@/lib/calendly/lead-questions'
+import { BookingLeadModal } from '@/components/booking-lead-modal'
+import type { LeadSchedulingIntent } from '@/lib/leads/lead-questions'
 
 type Props = {
-  calendlyEmbed: CalendlyEmbedRuntimeConfig
   intent?: LeadSchedulingIntent
 }
 
-export function BookACallStandalone({ calendlyEmbed, intent = 'demo' }: Props) {
+export function BookACallStandalone({ intent = 'demo' }: Props) {
   const router = useRouter()
   const [open, setOpen] = useState(true)
 
@@ -40,16 +38,11 @@ export function BookACallStandalone({ calendlyEmbed, intent = 'demo' }: Props) {
           Book a call
         </h1>
         <p className="mt-3 text-muted-foreground">
-          A short questionnaire opens first, then the Calendly scheduler. Close the window to return
-          home.
+          Fill in one quick form and we’ll send your audit or demo details to your email. Close the
+          window to return home.
         </p>
       </div>
-      <BookingLeadCalendlyModal
-        open={open}
-        onOpenChange={handleOpenChange}
-        calendly={calendlyEmbed}
-        intent={intent}
-      />
+      <BookingLeadModal open={open} onOpenChange={handleOpenChange} intent={intent} />
     </main>
   )
 }

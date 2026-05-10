@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { HeaderAuthSection } from "@/components/header-auth-section"
-import type { LeadSchedulingIntent } from "@/lib/calendly/lead-questions"
+import type { LeadSchedulingIntent } from "@/lib/leads/lead-questions"
 import { Menu, X } from "lucide-react"
 
 const navLinks = [

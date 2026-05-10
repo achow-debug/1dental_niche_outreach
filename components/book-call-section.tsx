@@ -3,7 +3,7 @@
 import Link from 'next/link'
 
 import { Button } from '@/components/ui/button'
-import type { LeadSchedulingIntent } from '@/lib/calendly/lead-questions'
+import type { LeadSchedulingIntent } from '@/lib/leads/lead-questions'
 
 type Props = {
   onOpenSchedulingModal: (intent: LeadSchedulingIntent) => void
@@ -27,8 +27,8 @@ export function BookCallSection({ onOpenSchedulingModal }: Props) {
           Request a demo or website audit
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-muted-foreground md:text-lg">
-          Answer a few quick questions, then pick a time in Calendly — all in one modal. Prefer a
-          dedicated page? Use the link below.
+          One short form to send your audit or demo details. Prefer a dedicated page? Use the link
+          below.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
           <Button

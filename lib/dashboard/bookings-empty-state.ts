@@ -85,7 +85,7 @@ export function buildTabBookingsEmptyState(bookings: UserBooking[], tab: 'upcomi
 }
 
 function noVisitsTodayContext(bookings: UserBooking[], now: Date): { next: UserBooking; isTomorrow: boolean } | null {
-  const upcoming = getUpcomingBookings(bookings)
+  const upcoming = getUpcomingBookings(bookings, now)
   if (upcoming.length === 0) return null
   const hasToday = upcoming.some((b) => isSameCalendarDayInZone(b.startsAt, now, DASHBOARD_BOOKINGS_TZ))
   if (hasToday) return null

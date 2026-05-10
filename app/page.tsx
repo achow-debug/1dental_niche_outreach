@@ -1,8 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { LandingHomeClient } from '@/components/landing-home-client'
 import { loadPublicCatalogForLanding } from '@/lib/landing/load-public-catalog'
-import { getCalendlyEmbedRuntimeConfig } from '@/lib/calendly/embed-config'
-import type { LeadSchedulingIntent } from '@/lib/calendly/lead-questions'
+import type { LeadSchedulingIntent } from '@/lib/leads/lead-questions'
 
 type HomeProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>
@@ -26,15 +25,12 @@ export default async function Home({ searchParams }: HomeProps) {
   const initialSchedulingIntent: LeadSchedulingIntent =
     schedule === 'audit' ? 'website_audit' : 'demo'
 
-  const calendlyEmbed = getCalendlyEmbedRuntimeConfig()
-
   return (
     <LandingHomeClient
       isLoggedIn={Boolean(authResult.data.user)}
       catalogItems={catalogItems}
       initialSchedulingOpen={initialSchedulingOpen}
       initialSchedulingIntent={initialSchedulingIntent}
-      calendlyEmbed={calendlyEmbed}
     />
   )
 }

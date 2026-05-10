@@ -19,7 +19,7 @@ import { HowItWorks } from '@/components/how-it-works'
 import { MeetDentist } from '@/components/meet-dentist'
 import { FAQSection } from '@/components/faq-section'
 import { PricingSection } from '@/components/pricing-section'
-import { BookingLeadCalendlyModal } from '@/components/booking-lead-calendly-modal'
+import { BookingLeadModal } from '@/components/booking-lead-modal'
 import { BookCallSection } from '@/components/book-call-section'
 import { FinalCTA } from '@/components/final-cta'
 import { Footer } from '@/components/footer'
@@ -29,15 +29,13 @@ import { ScrollReveal } from '@/components/scroll-reveal'
 import { SuitabilityChecker } from '@/components/suitability-checker'
 import type { LandingCatalogItem } from '@/lib/landing/load-public-catalog'
 import type { LandingBookClickHandler } from '@/lib/landing/book-cta'
-import type { CalendlyEmbedRuntimeConfig } from '@/lib/calendly/embed-config'
-import type { LeadSchedulingIntent } from '@/lib/calendly/lead-questions'
+import type { LeadSchedulingIntent } from '@/lib/leads/lead-questions'
 
 type Props = {
   isLoggedIn: boolean
   catalogItems: LandingCatalogItem[]
   initialSchedulingOpen?: boolean
   initialSchedulingIntent?: LeadSchedulingIntent
-  calendlyEmbed: CalendlyEmbedRuntimeConfig
 }
 
 function bookDestinationPath(treatmentSlug?: string): string {
@@ -52,7 +50,6 @@ export function LandingHomeClient({
   catalogItems,
   initialSchedulingOpen = false,
   initialSchedulingIntent = 'demo',
-  calendlyEmbed,
 }: Props) {
   const router = useRouter()
   const [schedulingOpen, setSchedulingOpen] = useState(initialSchedulingOpen)
@@ -166,10 +163,9 @@ export function LandingHomeClient({
 
       <div className="h-14 md:hidden" aria-hidden="true" />
 
-      <BookingLeadCalendlyModal
+      <BookingLeadModal
         open={schedulingOpen}
         onOpenChange={setSchedulingOpen}
-        calendly={calendlyEmbed}
         intent={schedulingIntent}
       />
     </main>

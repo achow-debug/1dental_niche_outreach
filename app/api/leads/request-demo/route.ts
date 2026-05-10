@@ -42,10 +42,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid lead data' }, { status: 400 })
   }
 
-  const webhookUrl = process.env.WEBSITE_AUDIT_N8N_WEBHOOK_URL?.trim()
+  const webhookUrl = process.env.REQUEST_DEMO_N8N_WEBHOOK_URL?.trim()
   if (!webhookUrl) {
-    console.error('[website-audit]', correlationId, 'missing WEBSITE_AUDIT_N8N_WEBHOOK_URL')
-    return NextResponse.json({ error: 'Lead capture is not configured.' }, { status: 503 })
+    console.error('[request-demo]', correlationId, 'missing REQUEST_DEMO_N8N_WEBHOOK_URL')
+    return NextResponse.json({ error: 'Demo lead capture is not configured.' }, { status: 503 })
   }
 
   if (!isPrivacyPolicyUrl(parsed.data.consent.privacyPolicyUrl)) {
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
   const secret = process.env.N8N_WEBHOOK_SECRET?.trim()
   const payload = {
     source: '1dental_niche_outreach',
-    intent: 'website_audit' as const,
+    intent: 'demo' as const,
     firstName,
     lastName,
     fullName,
@@ -76,14 +76,14 @@ export async function POST(req: Request) {
     webhookSecret: secret,
     payload,
     correlationId,
-    logLabel: 'website-audit',
-    webhookEnvName: 'WEBSITE_AUDIT_N8N_WEBHOOK_URL',
+    logLabel: 'request-demo',
+    webhookEnvName: 'REQUEST_DEMO_N8N_WEBHOOK_URL',
   })
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status })
   }
 
-  console.info('[website-audit]', correlationId, 'ok')
+  console.info('[request-demo]', correlationId, 'ok')
   return NextResponse.json({ ok: true })
 }
