@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { clientIp, isPrivacyPolicyUrl, rateLimitOk } from '@/lib/leads/lead-api-common'
+import { DEFAULT_WEBSITE_AUDIT_N8N_WEBHOOK_URL } from '@/lib/leads/n8n-webhook-defaults'
 import { postLeadJsonToN8nWebhook } from '@/lib/leads/post-n8n-webhook'
 
 const bodySchema = z
@@ -42,11 +43,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid lead data' }, { status: 400 })
   }
 
-  const webhookUrl = process.env.WEBSITE_AUDIT_N8N_WEBHOOK_URL?.trim()
-  if (!webhookUrl) {
-    console.error('[website-audit]', correlationId, 'missing WEBSITE_AUDIT_N8N_WEBHOOK_URL')
-    return NextResponse.json({ error: 'Lead capture is not configured.' }, { status: 503 })
-  }
+  const webhookUrl =
+    process.env.WEBSITE_AUDIT_N8N_WEBHOOK_URL?.trim() || DEFAULT_WEBSITE_AUDIT_N8N_WEBHOOK_URL
 
   if (!isPrivacyPolicyUrl(parsed.data.consent.privacyPolicyUrl)) {
     return NextResponse.json({ error: 'Invalid consent payload' }, { status: 400 })
