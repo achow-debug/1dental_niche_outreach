@@ -13,7 +13,7 @@ import { LandingBackToTop } from '@/components/landing-back-to-top'
 import { MobilestickyCTA } from '@/components/mobile-sticky-cta'
 import { ScrollReveal } from '@/components/scroll-reveal'
 import type { LandingCatalogItem } from '@/lib/landing/load-public-catalog'
-import type { LandingBookClickHandler } from '@/lib/landing/book-cta'
+import type { LandingBookClickHandler, LeadSchedulingContext } from '@/lib/landing/book-cta'
 import type { LeadSchedulingIntent } from '@/lib/leads/lead-questions'
 
 // Below-fold + interactive surfaces — keep them off the critical path for LCP (Task 17).
@@ -66,6 +66,9 @@ export function LandingHomeClient({
   const [schedulingOpen, setSchedulingOpen] = useState(initialSchedulingOpen)
   const [schedulingIntent, setSchedulingIntent] =
     useState<LeadSchedulingIntent>(initialSchedulingIntent)
+  const [schedulingContext, setSchedulingContext] = useState<LeadSchedulingContext | undefined>(
+    undefined,
+  )
 
   const handleBookClick = useCallback<LandingBookClickHandler>(
     (treatmentSlug) => {
@@ -85,10 +88,14 @@ export function LandingHomeClient({
     section?.scrollIntoView({ behavior })
   }
 
-  const openSchedulingModal = useCallback((intent: LeadSchedulingIntent) => {
-    setSchedulingIntent(intent)
-    setSchedulingOpen(true)
-  }, [])
+  const openSchedulingModal = useCallback(
+    (intent: LeadSchedulingIntent, context?: LeadSchedulingContext) => {
+      setSchedulingIntent(intent)
+      setSchedulingContext(context)
+      setSchedulingOpen(true)
+    },
+    [],
+  )
 
   return (
     <main
@@ -134,6 +141,7 @@ export function LandingHomeClient({
         open={schedulingOpen}
         onOpenChange={setSchedulingOpen}
         intent={schedulingIntent}
+        context={schedulingContext}
       />
 
       <LoginModal />

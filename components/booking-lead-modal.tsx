@@ -18,12 +18,14 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { LeadSchedulingIntent } from '@/lib/leads/lead-questions'
+import type { LeadSchedulingContext } from '@/lib/landing/book-cta'
 import { trackEvent } from '@/lib/analytics'
 
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
   intent: LeadSchedulingIntent
+  context?: LeadSchedulingContext
 }
 
 const SCAN_STEPS = [
@@ -43,6 +45,7 @@ const websiteUrlSchema = z
   .pipe(z.string().url('Enter a valid URL (e.g. https://yourclinic.co.uk).'))
 
 const formSchema = z.object({
+  bottleneck: z.string().trim().max(500).optional(),
   websiteUrl: websiteUrlSchema,
   name: z.string().trim().min(1, 'Your name is required.').max(200),
   email: z.string().trim().min(1, 'Email is required.').email('Enter a valid email address.').max(320),
@@ -53,6 +56,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>
 
 const emptyValues: FormValues = {
+  bottleneck: '',
   websiteUrl: '',
   name: '',
   email: '',
@@ -60,7 +64,7 @@ const emptyValues: FormValues = {
   honeypot: '',
 }
 
-export function BookingLeadModal({ open, onOpenChange, intent }: Props) {
+export function BookingLeadModal({ open, onOpenChange, intent, context }: Props) {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [scanStep, setScanStep] = useState(0)
   const [isScanning, setIsScanning] = useState(false)
@@ -98,13 +102,19 @@ export function BookingLeadModal({ open, onOpenChange, intent }: Props) {
   useEffect(() => {
     if (open) {
       if (!lastTrackedOpenRef.current) {
-        trackEvent('audit_modal_opened', { intent })
+        trackEvent('audit_modal_opened', {
+          intent,
+          bottleneckProvided: Boolean(context?.bottleneck),
+        })
         lastTrackedOpenRef.current = true
       }
+      // Pre-fill the bottleneck field with whatever the visitor typed into
+      // Quick Find so they don't have to retype it inside the modal.
+      reset({ ...emptyValues, bottleneck: context?.bottleneck ?? '' })
     } else {
       lastTrackedOpenRef.current = false
     }
-  }, [open, intent])
+  }, [open, intent, context, reset])
 
   useEffect(() => () => clearScanTimers(), [clearScanTimers])
 
@@ -121,11 +131,13 @@ export function BookingLeadModal({ open, onOpenChange, intent }: Props) {
     setIsScanning(false)
 
     const privacyPolicyUrl = `${window.location.origin}/privacy`
+    const trimmedBottleneck = values.bottleneck?.trim() ?? ''
     const body = {
       name: values.name.trim(),
       email: values.email.trim(),
       websiteUrl: values.websiteUrl.trim(),
       practiceName: values.practiceName.trim(),
+      ...(trimmedBottleneck ? { bottleneck: trimmedBottleneck } : {}),
       consent: {
         gdpr: true as const,
         privacyPolicyUrl,
@@ -227,6 +239,21 @@ export function BookingLeadModal({ open, onOpenChange, intent }: Props) {
                   autoComplete="off"
                   {...register('honeypot')}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="audit-bottleneck">Your biggest bottleneck (optional)</Label>
+                <textarea
+                  id="audit-bottleneck"
+                  rows={3}
+                  maxLength={500}
+                  placeholder="e.g. sales team waste time chasing leads that never convert"
+                  className="flex w-full rounded-xl border border-input bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm"
+                  aria-invalid={errors.bottleneck ? 'true' : 'false'}
+                  {...register('bottleneck')}
+                />
+                {errors.bottleneck ? (
+                  <p className="text-xs text-destructive">{errors.bottleneck.message}</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="audit-website-url">Website URL</Label>

@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
+import { Facebook, Instagram, Linkedin, Youtube } from "lucide-react"
 import { MagneticCTAButton } from "@/components/ui/magnetic-cta-button"
 import type { LeadSchedulingIntent } from "@/lib/leads/lead-questions"
 
@@ -15,6 +16,13 @@ const legalLinks = [
   { label: "Terms", href: "/terms" },
   { label: "Accessibility", href: "/accessibility" },
 ]
+
+const socialLinks = [
+  { label: "Instagram", href: "#", Icon: Instagram },
+  { label: "Facebook", href: "#", Icon: Facebook },
+  { label: "LinkedIn", href: "#", Icon: Linkedin },
+  { label: "YouTube", href: "#", Icon: Youtube },
+] as const
 
 export function Footer({ onBookClick: _onBookClick, onOpenSchedulingModal }: FooterProps) {
   return (
@@ -39,6 +47,22 @@ export function Footer({ onBookClick: _onBookClick, onOpenSchedulingModal }: Foo
         >
           Book Website Audit
         </MagneticCTAButton>
+
+        <ul className="flex items-center justify-center gap-3" aria-label="Carter Dental on social media">
+          {socialLinks.map((link) => (
+            <li key={link.label}>
+              <Link
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${link.label} (opens in new tab)`}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[var(--glass-border)] bg-background/80 text-foreground/80 transition-colors hover:text-foreground hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                <link.Icon className="h-5 w-5" aria-hidden="true" />
+              </Link>
+            </li>
+          ))}
+        </ul>
 
         <div className="flex flex-col items-center gap-3 pt-2 text-xs text-muted-foreground sm:flex-row sm:gap-6">
           <p>© {new Date().getFullYear()} Carter Dental Studio</p>

@@ -6,10 +6,9 @@ import type { LeadSchedulingIntent } from '@/lib/leads/lead-questions'
 import { trackEvent } from '@/lib/analytics'
 
 const CONCERNS = [
-  { id: 'booking-link', label: "Patients say they can't find your booking link" },
-  { id: 'no-conversion', label: "You're chasing leads that never convert" },
-  { id: 'dated-mobile', label: 'Your site looks dated on mobile' },
-  { id: 'unknown-issues', label: "You don't know what's broken" },
+  { id: 'booking-link', label: 'Booking link ineffective' },
+  { id: 'no-conversion', label: 'Team wastes time chasing leads that never convert' },
+  { id: 'dated-mobile', label: 'Site looks dated on mobile' },
 ] as const
 
 type Props = {
@@ -30,20 +29,20 @@ export function ConcernPicker({ onOpenSchedulingModal }: Props) {
       <div className="mx-auto max-w-3xl">
         <div className="text-center">
           <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-            Sound familiar?
+            Common diagnostics
           </span>
           <h2
             id="concern-picker-heading"
             className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
           >
-            What’s costing your practice patients right now?
+            Common website bottlenecks costing patients
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-balance text-base text-muted-foreground">
-            Pick the one that hurts the most — we’ll line up an audit that fixes it first.
+            This is what we usually see hurting other practices’ sites — sound familiar?
           </p>
         </div>
 
-        <ul className="mt-8 grid gap-3 sm:grid-cols-2">
+        <ul className="mt-8 grid gap-3 sm:grid-cols-3">
           {CONCERNS.map((concern) => (
             <li key={concern.id}>
               <button

@@ -12,6 +12,7 @@ const bodySchema = z
     email: z.string().trim().email().max(320),
     websiteUrl: z.string().trim().url().max(500),
     practiceName: z.string().trim().min(1).max(200),
+    bottleneck: z.string().trim().max(500).optional(),
     consent: z.object({
       gdpr: z.literal(true),
       privacyPolicyUrl: z.string().url().max(500),
@@ -59,7 +60,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid consent payload' }, { status: 400 })
   }
 
-  const { name, email, websiteUrl, practiceName } = parsed.data
+  const { name, email, websiteUrl, practiceName, bottleneck } = parsed.data
   const { firstName, lastName } = splitName(name)
   const fullName = name.trim().replace(/\s+/g, ' ')
 
@@ -73,6 +74,7 @@ export async function POST(req: Request) {
     email,
     websiteUrl,
     practiceName,
+    ...(bottleneck ? { bottleneck } : {}),
     consent: {
       ...parsed.data.consent,
       submittedAt: new Date().toISOString(),

@@ -38,6 +38,11 @@ export function Header({ onBookClick: _onBookClick, onOpenSchedulingModal }: Hea
   const searchParams = useSearchParams()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  // Two-stage mount so the sheet can animate IN on open and OUT on close.
+  // `isSheetMounted` keeps the node in the DOM long enough for the exit transition.
+  // `isSheetVisible` toggles the `data-state` attribute the CSS keys off of.
+  const [isSheetMounted, setIsSheetMounted] = useState(false)
+  const [isSheetVisible, setIsSheetVisible] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,15 +52,31 @@ export function Header({ onBookClick: _onBookClick, onOpenSchedulingModal }: Hea
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Lock body scroll while the mobile glass sheet is open.
   useEffect(() => {
-    if (!isMobileMenuOpen) return
+    if (isMobileMenuOpen) {
+      setIsSheetMounted(true)
+      // Wait for the node to be in the DOM (and styles applied) before flipping
+      // to the visible state so the transition actually runs.
+      const raf = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setIsSheetVisible(true))
+      })
+      return () => cancelAnimationFrame(raf)
+    }
+    setIsSheetVisible(false)
+    // Keep mounted until the longest transition (380ms transform) finishes.
+    const timeout = window.setTimeout(() => setIsSheetMounted(false), 420)
+    return () => window.clearTimeout(timeout)
+  }, [isMobileMenuOpen])
+
+  // Lock body scroll while the mobile glass sheet is mounted.
+  useEffect(() => {
+    if (!isSheetMounted) return
     const previous = document.body.style.overflow
     document.body.style.overflow = "hidden"
     return () => {
       document.body.style.overflow = previous
     }
-  }, [isMobileMenuOpen])
+  }, [isSheetMounted])
 
   const openAuditModal = () => {
     setIsMobileMenuOpen(false)
@@ -139,21 +160,13 @@ export function Header({ onBookClick: _onBookClick, onOpenSchedulingModal }: Hea
               </MagneticCTAButton>
             </div>
 
-            {/* Mobile: compact CTA + hamburger */}
-            <div className="flex items-center gap-2 md:hidden">
+            {/* Mobile: auth + hamburger (CTA lives in hero + sticky bar only) */}
+            <div className="flex items-center gap-1 md:hidden">
               <HeaderAuthSection variant="mobile-toolbar" onNavigate={() => setIsMobileMenuOpen(false)} />
-              <MagneticCTAButton
-                type="button"
-                onClick={openAuditModal}
-                variant="cta"
-                className="h-11 min-h-[44px] px-3 text-xs font-semibold whitespace-nowrap"
-              >
-                Book Website Audit
-              </MagneticCTAButton>
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen((open) => !open)}
-                className="shrink-0 inline-flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-secondary/50 text-foreground transition-colors hover:bg-secondary"
+                className="shrink-0 inline-flex h-12 w-12 min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-secondary/50 text-foreground transition-colors hover:bg-secondary"
                 aria-expanded={isMobileMenuOpen}
                 aria-controls="mobile-nav-sheet"
                 aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
@@ -166,21 +179,26 @@ export function Header({ onBookClick: _onBookClick, onOpenSchedulingModal }: Hea
       </header>
 
       {/* Mobile full-height glass sheet */}
-      {isMobileMenuOpen ? (
+      {isSheetMounted ? (
         <div
           id="mobile-nav-sheet"
           role="dialog"
           aria-modal="true"
           aria-label="Site navigation"
+          aria-hidden={!isSheetVisible}
           className="md:hidden fixed inset-0 z-[60] flex flex-col"
         >
           <button
             type="button"
             aria-label="Close menu"
-            className="absolute inset-0 bg-black/30"
+            data-state={isSheetVisible ? "open" : "closed"}
+            className="mobile-nav-backdrop absolute inset-0 bg-black/40"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-          <div className="relative glass-surface mx-3 mt-3 mb-3 flex flex-1 flex-col rounded-3xl border-none p-6 shadow-2xl animate-fade-in-up">
+          <div
+            data-state={isSheetVisible ? "open" : "closed"}
+            className="mobile-nav-sheet glass-surface-strong relative mx-3 mt-3 mb-3 flex flex-1 flex-col rounded-3xl border-none p-6 shadow-2xl"
+          >
             <div className="flex items-center justify-between">
               <Link
                 href="/"
@@ -194,7 +212,7 @@ export function Header({ onBookClick: _onBookClick, onOpenSchedulingModal }: Hea
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-secondary/50 text-foreground transition-colors hover:bg-secondary"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-secondary/70 text-foreground transition-colors hover:bg-secondary"
                 aria-label="Close menu"
               >
                 <X className="h-6 w-6" />
@@ -207,7 +225,7 @@ export function Header({ onBookClick: _onBookClick, onOpenSchedulingModal }: Hea
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex min-h-[52px] items-center rounded-xl px-3 text-lg font-medium text-foreground transition-colors hover:bg-secondary/40"
+                  className="flex min-h-[52px] items-center rounded-xl px-3 text-lg font-medium text-foreground transition-colors hover:bg-secondary/60"
                 >
                   {link.label}
                 </Link>
@@ -215,7 +233,7 @@ export function Header({ onBookClick: _onBookClick, onOpenSchedulingModal }: Hea
               <button
                 type="button"
                 onClick={openLoginModal}
-                className="flex min-h-[52px] items-center rounded-xl px-3 text-left text-lg font-medium text-foreground transition-colors hover:bg-secondary/40"
+                className="flex min-h-[52px] items-center rounded-xl px-3 text-left text-lg font-medium text-foreground transition-colors hover:bg-secondary/60"
               >
                 Log in
               </button>
