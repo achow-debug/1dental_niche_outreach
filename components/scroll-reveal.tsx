@@ -1,14 +1,16 @@
 "use client"
 
-import { useEffect, useRef, ReactNode } from "react"
+import { Children, cloneElement, isValidElement, useEffect, useRef, type CSSProperties, type ReactElement, type ReactNode } from "react"
 
 interface ScrollRevealProps {
   children: ReactNode
   className?: string
   once?: boolean
+  /** When true, applies a 60ms enter stagger to direct children (Task 15). */
+  stagger?: boolean
 }
 
-export function ScrollReveal({ children, className = "", once = true }: ScrollRevealProps) {
+export function ScrollReveal({ children, className = "", once = true, stagger = false }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -42,9 +44,27 @@ export function ScrollReveal({ children, className = "", once = true }: ScrollRe
     }
   }, [once])
 
+  const staggeredChildren = stagger
+    ? Children.map(children, (child, index) => {
+        if (!isValidElement(child)) return child
+        const element = child as ReactElement<{ style?: CSSProperties }>
+        const existingStyle = element.props.style ?? {}
+        return cloneElement(element, {
+          style: {
+            ...existingStyle,
+            ['--reveal-index' as string]: String(index),
+          } as CSSProperties,
+        })
+      })
+    : children
+
   return (
-    <div ref={ref} className={`reveal-on-scroll ${className}`}>
-      {children}
+    <div
+      ref={ref}
+      data-stagger={stagger ? 'true' : undefined}
+      className={`reveal-on-scroll ${className}`.trim()}
+    >
+      {staggeredChildren}
     </div>
   )
 }

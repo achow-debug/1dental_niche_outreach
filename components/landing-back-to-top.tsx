@@ -32,7 +32,7 @@ export function LandingBackToTop() {
         size="icon"
         variant="secondary"
         onClick={scrollToTop}
-        className="h-12 w-12 rounded-full border border-border/80 bg-card/95 shadow-lg backdrop-blur-md hover:bg-card"
+        className="h-12 w-12 rounded-full border border-[var(--glass-border)] bg-[var(--glass-bg)] shadow-lg backdrop-blur-md supports-[backdrop-filter]:bg-[var(--glass-bg)] hover:brightness-[1.02]"
         aria-label="Back to top"
       >
         <ChevronUp className="h-5 w-5" aria-hidden />

@@ -8,11 +8,10 @@ import { postLeadJsonToN8nWebhook } from '@/lib/leads/post-n8n-webhook'
 
 const bodySchema = z
   .object({
-    firstName: z.string().trim().min(1).max(100),
-    lastName: z.string().trim().min(1).max(100),
+    name: z.string().trim().min(1).max(200),
     email: z.string().trim().email().max(320),
-    sector: z.string().trim().min(1).max(200),
-    teamSize: z.string().trim().min(1).max(200),
+    websiteUrl: z.string().trim().url().max(500),
+    practiceName: z.string().trim().min(1).max(200),
     consent: z.object({
       gdpr: z.literal(true),
       privacyPolicyUrl: z.string().url().max(500),
@@ -22,6 +21,16 @@ const bodySchema = z
   })
   .strict()
   .refine((d) => !d.honeypot?.trim(), { message: 'Invalid request' })
+
+function splitName(full: string): { firstName: string; lastName: string } {
+  const trimmed = full.trim().replace(/\s+/g, ' ')
+  if (!trimmed) return { firstName: '', lastName: '' }
+  const [first, ...rest] = trimmed.split(' ')
+  return {
+    firstName: first ?? '',
+    lastName: rest.join(' ').trim(),
+  }
+}
 
 export async function POST(req: Request) {
   const correlationId = randomUUID()
@@ -50,8 +59,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid consent payload' }, { status: 400 })
   }
 
-  const { firstName, lastName, email, sector, teamSize } = parsed.data
-  const fullName = `${firstName} ${lastName}`.trim()
+  const { name, email, websiteUrl, practiceName } = parsed.data
+  const { firstName, lastName } = splitName(name)
+  const fullName = name.trim().replace(/\s+/g, ' ')
 
   const secret = process.env.N8N_WEBHOOK_SECRET?.trim()
   const payload = {
@@ -61,8 +71,8 @@ export async function POST(req: Request) {
     lastName,
     fullName,
     email,
-    sector,
-    teamSize,
+    websiteUrl,
+    practiceName,
     consent: {
       ...parsed.data.consent,
       submittedAt: new Date().toISOString(),

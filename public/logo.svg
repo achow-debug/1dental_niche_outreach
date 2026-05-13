@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 64" width="260" height="64" role="img" aria-label="Carter Dental">
+  <defs>
+    <linearGradient id="cd-logo-gradient" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6FB1B1" />
+      <stop offset="55%" stop-color="#4A8A8A" />
+      <stop offset="100%" stop-color="#2F6868" />
+    </linearGradient>
+    <linearGradient id="cd-logo-sheen" x1="0" y1="0" x2="0" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.22" />
+      <stop offset="55%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="url(#cd-logo-gradient)" />
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="url(#cd-logo-sheen)" />
+  <g fill="none" stroke="#FFFFFF" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M28 19.5a12.5 12.5 0 1 0 0 25" />
+    <path d="M34 19.5h6.2a12.5 12.5 0 0 1 0 25H34Z" />
+  </g>
+  <text x="80" y="40"
+    fill="currentColor"
+    font-family="'Manrope', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif"
+    font-weight="600"
+    font-size="22"
+    letter-spacing="-0.6"
+  >Carter Dental</text>
+</svg>

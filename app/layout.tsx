@@ -10,13 +10,68 @@ const manrope = Manrope({
   display: 'swap',
 });
 
+const auditServiceJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  serviceType: 'Dental practice website audit',
+  name: 'Dental Website Audit',
+  description:
+    "A 10-minute audit of a private dental clinic's website that pinpoints why it's costing patients and how to fix it.",
+  provider: {
+    '@type': 'Organization',
+    name: 'Carter Dental Studio',
+    url: 'https://carterdentalstudio.co.uk',
+  },
+  areaServed: {
+    '@type': 'Country',
+    name: 'United Kingdom',
+  },
+  audience: {
+    '@type': 'BusinessAudience',
+    audienceType: 'Private dental clinics',
+  },
+  offers: {
+    '@type': 'Offer',
+    priceCurrency: 'GBP',
+    price: '0',
+    availability: 'https://schema.org/InStock',
+  },
+} as const
+
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.trim() || 'https://carterdentalstudio.co.uk'
+
 export const metadata: Metadata = {
-  title: 'Carter Dental Studio | Private Dental Care in Manchester',
-  description: 'Modern private dental care that feels calm, clear, and easy to book. Serving Manchester with gentle dentistry, cosmetic treatments, and same-week emergency appointments.',
-  keywords: ['dentist manchester', 'private dentist', 'cosmetic dentistry', 'nervous patients dentist', 'emergency dentist'],
+  metadataBase: new URL(SITE_URL),
+  title: 'Carter Dental Studio | Dental Website Audits for UK Private Clinics',
+  description:
+    'A 10-minute audit shows you exactly why your dental site is costing you patients — and how to fix it. Trusted by 40+ UK private practices.',
+  keywords: [
+    'dental website audit',
+    'dentist website redesign',
+    'dental marketing audit',
+    'website speed audit',
+    'dental SEO audit',
+  ],
+  openGraph: {
+    title: 'Free Website Audit for Dental Clinics | Carter Dental',
+    description:
+      'A 10-minute audit shows you exactly why your dental site is costing you patients — and how to fix it.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Free Website Audit for Dental Clinics | Carter Dental',
+    description:
+      'A 10-minute audit shows you exactly why your dental site is costing you patients — and how to fix it.',
+  },
   authors: [{ name: 'Dr. Amelia Carter' }],
   icons: {
     icon: [
+      {
+        url: '/logo-mark.svg',
+        type: 'image/svg+xml',
+      },
       {
         url: '/icon-light-32x32.png',
         media: '(prefers-color-scheme: light)',
@@ -24,10 +79,6 @@ export const metadata: Metadata = {
       {
         url: '/icon-dark-32x32.png',
         media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
       },
     ],
     apple: '/apple-icon.png',
@@ -48,6 +99,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en-GB" className={`${manrope.variable} bg-background`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(auditServiceJsonLd) }}
+        />
+      </head>
       <body className="font-sans antialiased relative">
         <a
           href="#main-content"

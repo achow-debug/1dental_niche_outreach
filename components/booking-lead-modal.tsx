@@ -1,10 +1,13 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -15,6 +18,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { LeadSchedulingIntent } from '@/lib/leads/lead-questions'
+import { trackEvent } from '@/lib/analytics'
 
 type Props = {
   open: boolean
@@ -22,90 +26,117 @@ type Props = {
   intent: LeadSchedulingIntent
 }
 
-type FormState = {
-  firstName: string
-  lastName: string
-  email: string
-  sector: string
-  teamSize: string
-  gdprAccepted: boolean
-  honeypot: string
-}
+const SCAN_STEPS = [
+  'Scanning your site…',
+  'Checking mobile speed…',
+  'Reviewing SEO…',
+] as const
 
-const emptyForm = (): FormState => ({
-  firstName: '',
-  lastName: '',
-  email: '',
-  sector: '',
-  teamSize: '',
-  gdprAccepted: false,
-  honeypot: '',
+const SCAN_TOTAL_MS = 2000
+const SCAN_STEP_MS = Math.floor(SCAN_TOTAL_MS / SCAN_STEPS.length)
+
+const websiteUrlSchema = z
+  .string()
+  .trim()
+  .min(1, 'Website URL is required.')
+  .transform((value) => (/^https?:\/\//i.test(value) ? value : `https://${value}`))
+  .pipe(z.string().url('Enter a valid URL (e.g. https://yourclinic.co.uk).'))
+
+const formSchema = z.object({
+  websiteUrl: websiteUrlSchema,
+  name: z.string().trim().min(1, 'Your name is required.').max(200),
+  email: z.string().trim().min(1, 'Email is required.').email('Enter a valid email address.').max(320),
+  practiceName: z.string().trim().min(1, 'Practice name is required.').max(200),
+  honeypot: z.string().max(200).optional(),
 })
 
-function isValidEmail(email: string): boolean {
-  const s = email.trim()
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)
+type FormValues = z.infer<typeof formSchema>
+
+const emptyValues: FormValues = {
+  websiteUrl: '',
+  name: '',
+  email: '',
+  practiceName: '',
+  honeypot: '',
 }
 
 export function BookingLeadModal({ open, onOpenChange, intent }: Props) {
-  const [form, setForm] = useState<FormState>(emptyForm)
-  const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [scanStep, setScanStep] = useState(0)
+  const [isScanning, setIsScanning] = useState(false)
   const [success, setSuccess] = useState(false)
   const [confirmedEmail, setConfirmedEmail] = useState('')
+  const scanTimers = useRef<ReturnType<typeof setTimeout>[]>([])
+  const lastTrackedOpenRef = useRef(false)
 
-  const reset = useCallback(() => {
-    setForm(emptyForm())
-    setSubmitting(false)
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: emptyValues,
+    mode: 'onTouched',
+  })
+
+  const clearScanTimers = useCallback(() => {
+    for (const t of scanTimers.current) clearTimeout(t)
+    scanTimers.current = []
+  }, [])
+
+  const reseed = useCallback(() => {
+    clearScanTimers()
     setSubmitError(null)
+    setScanStep(0)
+    setIsScanning(false)
     setSuccess(false)
     setConfirmedEmail('')
-  }, [])
+    reset(emptyValues)
+  }, [clearScanTimers, reset])
+
+  useEffect(() => {
+    if (open) {
+      if (!lastTrackedOpenRef.current) {
+        trackEvent('audit_modal_opened', { intent })
+        lastTrackedOpenRef.current = true
+      }
+    } else {
+      lastTrackedOpenRef.current = false
+    }
+  }, [open, intent])
+
+  useEffect(() => () => clearScanTimers(), [clearScanTimers])
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
-      if (!next) reset()
+      if (!next) reseed()
       onOpenChange(next)
     },
-    [onOpenChange, reset],
+    [onOpenChange, reseed],
   )
 
-  const validate = (): boolean => {
-    return (
-      Boolean(form.firstName.trim()) &&
-      Boolean(form.lastName.trim()) &&
-      isValidEmail(form.email) &&
-      Boolean(form.sector.trim()) &&
-      Boolean(form.teamSize.trim()) &&
-      form.gdprAccepted &&
-      !form.honeypot.trim()
-    )
-  }
-
-  const handleSubmit = async () => {
-    if (!validate()) return
-
-    setSubmitting(true)
+  const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null)
-    const emailTrim = form.email.trim()
+    setIsScanning(false)
 
     const privacyPolicyUrl = `${window.location.origin}/privacy`
     const body = {
-      firstName: form.firstName.trim(),
-      lastName: form.lastName.trim(),
-      email: emailTrim,
-      sector: form.sector.trim(),
-      teamSize: form.teamSize.trim(),
+      name: values.name.trim(),
+      email: values.email.trim(),
+      websiteUrl: values.websiteUrl.trim(),
+      practiceName: values.practiceName.trim(),
       consent: {
         gdpr: true as const,
         privacyPolicyUrl,
         submittedAt: new Date().toISOString(),
       },
-      honeypot: form.honeypot,
+      honeypot: values.honeypot ?? '',
     }
 
     try {
-      const path = intent === 'website_audit' ? '/api/leads/website-audit' : '/api/leads/request-demo'
+      const path =
+        intent === 'website_audit' ? '/api/leads/website-audit' : '/api/leads/request-demo'
       const res = await fetch(path, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -116,130 +147,155 @@ export function BookingLeadModal({ open, onOpenChange, intent }: Props) {
         setSubmitError(data.error ?? 'Something went wrong. Please try again.')
         return
       }
-      setConfirmedEmail(emailTrim)
-      setSuccess(true)
+
+      // Reassuring 2-second scanning microinteraction before we reveal success.
+      setIsScanning(true)
+      setScanStep(0)
+      clearScanTimers()
+      SCAN_STEPS.forEach((_, idx) => {
+        if (idx === 0) return
+        const t = setTimeout(() => setScanStep(idx), idx * SCAN_STEP_MS)
+        scanTimers.current.push(t)
+      })
+      const finishTimer = setTimeout(() => {
+        setIsScanning(false)
+        setConfirmedEmail(body.email)
+        setSuccess(true)
+        trackEvent('audit_submitted', { intent })
+      }, SCAN_TOTAL_MS)
+      scanTimers.current.push(finishTimer)
     } catch {
       setSubmitError('Network error. Please check your connection and try again.')
-    } finally {
-      setSubmitting(false)
     }
-  }
+  })
 
-  const formTitle =
-    intent === 'website_audit'
-      ? 'Where should we send your website audit?'
-      : 'Where should we send your demo?'
-
-  const submitLabel = intent === 'website_audit' ? 'Get my audit' : 'Get my demo'
+  const isAudit = intent === 'website_audit'
+  const formTitle = isAudit
+    ? 'Get your free website audit'
+    : 'Where should we send your demo?'
+  const formDescription = isAudit
+    ? 'Tell us where to send it and we’ll have your audit ready in a minute.'
+    : 'Enter your details and we’ll follow up at this address.'
+  const submitLabel = isAudit ? 'Get my free audit' : 'Get my demo'
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         showCloseButton
-        className="z-[100] flex max-h-[min(92vh,920px)] max-w-lg flex-col gap-0 overflow-hidden p-0"
+        className="z-[100] flex max-h-[min(92vh,920px)] max-w-lg flex-col gap-0 overflow-hidden border-none bg-[var(--glass-bg-strong)] p-0 shadow-2xl backdrop-blur-2xl supports-[backdrop-filter]:bg-[var(--glass-bg-strong)]"
+        style={{ borderColor: 'var(--glass-border)', borderWidth: 1, borderStyle: 'solid' }}
       >
-        <DialogHeader className="shrink-0 border-b border-border px-5 pb-4 pt-5 text-left sm:px-6">
+        <DialogHeader className="shrink-0 border-b border-[var(--glass-border)] px-5 pb-4 pt-5 text-left sm:px-6">
           <DialogTitle className="text-pretty pr-8">
-            {success ? 'Thank you' : formTitle}
+            {success ? 'Audit on its way' : formTitle}
           </DialogTitle>
           <DialogDescription className="text-pretty">
             {success
-              ? intent === 'website_audit'
-                ? `Your website audit will be sent to ${confirmedEmail}.`
-                : `We'll send your demo details to ${confirmedEmail}.`
-              : intent === 'website_audit'
-                ? 'Enter your details and we’ll email your audit to you.'
-                : 'Enter your details and we’ll follow up at this address.'}
+              ? `We’ll email your audit to ${confirmedEmail} within the next business day.`
+              : formDescription}
           </DialogDescription>
         </DialogHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6 sm:py-5">
-          {success ? null : (
-            <div className="space-y-4">
-              <div className="sr-only" aria-hidden="true">
-                <Label htmlFor="lead-company-website">Company website</Label>
-                <Input
-                  id="lead-company-website"
-                  tabIndex={-1}
-                  autoComplete="off"
-                  value={form.honeypot}
-                  onChange={(e) => setForm((f) => ({ ...f, honeypot: e.target.value }))}
-                />
+          {success ? null : isScanning ? (
+            <div
+              className="flex min-h-[260px] flex-col items-center justify-center gap-5 text-center"
+              role="status"
+              aria-live="polite"
+            >
+              <Loader2 className="h-10 w-10 animate-spin text-primary motion-reduce:animate-none" aria-hidden="true" />
+              <div className="space-y-1">
+                <p className="text-base font-medium text-foreground">{SCAN_STEPS[scanStep]}</p>
+                <p className="text-sm text-muted-foreground">Hang tight — finalising your audit.</p>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2 sm:col-span-1">
-                  <Label htmlFor="lead-first-name">First name</Label>
-                  <Input
-                    id="lead-first-name"
-                    autoComplete="given-name"
-                    value={form.firstName}
-                    onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
-                    placeholder="Jane"
-                    className="rounded-xl"
-                  />
-                </div>
-                <div className="space-y-2 sm:col-span-1">
-                  <Label htmlFor="lead-last-name">Last name</Label>
-                  <Input
-                    id="lead-last-name"
-                    autoComplete="family-name"
-                    value={form.lastName}
-                    onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))}
-                    placeholder="Smith"
-                    className="rounded-xl"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lead-email">Email address</Label>
-                <Input
-                  id="lead-email"
-                  type="email"
-                  autoComplete="email"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  placeholder="you@company.com"
-                  className="rounded-xl"
+              <div className="h-1.5 w-48 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full bg-primary transition-[width] duration-500 ease-out motion-reduce:transition-none"
+                  style={{
+                    width: `${Math.min(100, ((scanStep + 1) / SCAN_STEPS.length) * 100)}%`,
+                  }}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lead-sector">Sector</Label>
-                <Input
-                  id="lead-sector"
-                  value={form.sector}
-                  onChange={(e) => setForm((f) => ({ ...f, sector: e.target.value }))}
-                  placeholder="Dental / Healthcare"
-                  className="rounded-xl"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lead-team-size">Team Size</Label>
-                <Input
-                  id="lead-team-size"
-                  value={form.teamSize}
-                  onChange={(e) => setForm((f) => ({ ...f, teamSize: e.target.value }))}
-                  placeholder="10"
-                  className="rounded-xl"
-                />
-              </div>
-              <div className="flex items-start gap-3 rounded-xl border border-border bg-card px-4 py-3">
-                <Checkbox
-                  id="lead-gdpr"
-                  checked={form.gdprAccepted}
-                  onCheckedChange={(v) =>
-                    setForm((f) => ({ ...f, gdprAccepted: v === true }))
-                  }
-                  className="mt-0.5"
-                />
-                <Label htmlFor="lead-gdpr" className="cursor-pointer text-sm font-normal leading-snug">
-                  I agree to the processing of my data for this request, as described in the{' '}
-                  <Link href="/privacy" className="text-primary underline-offset-2 hover:underline">
-                    Privacy policy
-                  </Link>
-                  . (Required)
-                </Label>
               </div>
             </div>
+          ) : (
+            <form id="audit-form" noValidate onSubmit={onSubmit} className="space-y-4">
+              <div className="sr-only" aria-hidden="true">
+                <Label htmlFor="lead-honeypot">Company website</Label>
+                <Input
+                  id="lead-honeypot"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  {...register('honeypot')}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="audit-website-url">Website URL</Label>
+                <Input
+                  id="audit-website-url"
+                  type="url"
+                  inputMode="url"
+                  autoComplete="url"
+                  placeholder="https://yourclinic.co.uk"
+                  className="rounded-xl"
+                  aria-invalid={errors.websiteUrl ? 'true' : 'false'}
+                  {...register('websiteUrl')}
+                />
+                {errors.websiteUrl ? (
+                  <p className="text-xs text-destructive">{errors.websiteUrl.message}</p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="audit-name">Your name</Label>
+                <Input
+                  id="audit-name"
+                  autoComplete="name"
+                  placeholder="Jane Smith"
+                  className="rounded-xl"
+                  aria-invalid={errors.name ? 'true' : 'false'}
+                  {...register('name')}
+                />
+                {errors.name ? (
+                  <p className="text-xs text-destructive">{errors.name.message}</p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="audit-email">Email</Label>
+                <Input
+                  id="audit-email"
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  placeholder="you@yourclinic.co.uk"
+                  className="rounded-xl"
+                  aria-invalid={errors.email ? 'true' : 'false'}
+                  {...register('email')}
+                />
+                {errors.email ? (
+                  <p className="text-xs text-destructive">{errors.email.message}</p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="audit-practice">Practice name</Label>
+                <Input
+                  id="audit-practice"
+                  autoComplete="organization"
+                  placeholder="Carter Dental Studio"
+                  className="rounded-xl"
+                  aria-invalid={errors.practiceName ? 'true' : 'false'}
+                  {...register('practiceName')}
+                />
+                {errors.practiceName ? (
+                  <p className="text-xs text-destructive">{errors.practiceName.message}</p>
+                ) : null}
+              </div>
+              <p className="pt-1 text-xs text-muted-foreground">
+                By submitting, you agree to our{' '}
+                <Link href="/privacy" className="text-primary underline-offset-2 hover:underline">
+                  Privacy policy
+                </Link>
+                .
+              </p>
+            </form>
           )}
 
           {submitError ? (
@@ -249,20 +305,25 @@ export function BookingLeadModal({ open, onOpenChange, intent }: Props) {
           ) : null}
         </div>
 
-        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border bg-background px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+        <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-[var(--glass-border)] px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
           {success ? (
             <Button type="button" variant="cta" onClick={() => handleOpenChange(false)}>
               Close
             </Button>
+          ) : isScanning ? (
+            <Button type="button" variant="cta" disabled className="w-full sm:w-auto">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+              Preparing your audit…
+            </Button>
           ) : (
             <Button
-              type="button"
+              type="submit"
+              form="audit-form"
               variant="cta"
               className="w-full sm:w-auto"
-              onClick={() => void handleSubmit()}
-              disabled={submitting}
+              disabled={isSubmitting}
             >
-              {submitting ? 'Sending…' : submitLabel}
+              {isSubmitting ? 'Sending…' : submitLabel}
             </Button>
           )}
         </div>

@@ -39,6 +39,17 @@
   --radius: 1.5rem; /* Larger, more modern radius */
   --hero-glow: radial-gradient(circle at 50% 50%, oklch(0.95 0.03 185 / 0.15) 0%, transparent 70%);
   --cta-glow: radial-gradient(circle at 50% 50%, oklch(0.55 0.1 185 / 0.05) 0%, transparent 100%);
+
+  /* Apple-style spring easing (Task 15) */
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Glass design tokens (Task 16) — light theme. */
+  --glass-bg: oklch(1 0 0 / 0.72);
+  --glass-bg-strong: oklch(1 0 0 / 0.96); /* Modals/forms — readable over busy backgrounds. */
+  --glass-border: oklch(1 0 0 / 0.55);
+  --glass-blur: 18px;
+  --glass-shadow: 0 12px 32px -16px oklch(0.2 0.01 260 / 0.18);
+  --glass-solid-bg: oklch(0.99 0.002 90);
   
   --sidebar: oklch(0.99 0.002 90);
   --sidebar-foreground: oklch(0.2 0.01 260);
@@ -84,6 +95,14 @@
   --sidebar-accent-foreground: oklch(0.75 0.1 185);
   --sidebar-border: oklch(0.32 0.01 260);
   --sidebar-ring: oklch(0.55 0.12 185);
+
+  /* Glass design tokens (Task 16) — dark theme. */
+  --glass-bg: oklch(0.22 0.01 260 / 0.55);
+  --glass-bg-strong: oklch(0.22 0.01 260 / 0.94); /* Modals/forms in dark mode. */
+  --glass-border: oklch(1 0 0 / 0.12);
+  --glass-blur: 22px;
+  --glass-shadow: 0 16px 36px -18px oklch(0 0 0 / 0.55);
+  --glass-solid-bg: oklch(0.22 0.01 260);
 }
 
 @theme inline {
@@ -146,11 +165,19 @@
   }
   
   .glass-surface {
-    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-sm;
+    background-color: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    box-shadow: var(--glass-shadow);
   }
 
   .glass-surface-elevated {
-    @apply bg-white/75 backdrop-blur-xl border border-white/35 shadow-lg shadow-black/5 dark:bg-black/35 dark:border-white/15 dark:shadow-black/30;
+    background-color: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(calc(var(--glass-blur) * 1.4));
+    -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.4));
+    box-shadow: var(--glass-shadow);
   }
 
   .fluid-action {
@@ -232,29 +259,129 @@
   mix-blend-mode: overlay;
 }
 
-/* Section transitions */
+/* Apple-style enter motion: blur + lift + opacity. Transforms only — no layout shift. */
 .reveal-on-scroll {
   opacity: 0;
-  transform: translateY(30px) scale(0.98);
-  transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  filter: blur(8px);
+  transform: translate3d(0, 16px, 0);
+  transition:
+    opacity 0.7s var(--ease-spring),
+    filter 0.7s var(--ease-spring),
+    transform 0.7s var(--ease-spring);
+  will-change: opacity, transform, filter;
 }
 
 .reveal-on-scroll.is-visible {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  filter: blur(0);
+  transform: translate3d(0, 0, 0);
 }
 
-/* Magnetic-style CTA: soft lift + depth on hover */
-.magnetic-btn {
+/* Per-child stagger inside a reveal group (60ms apart). */
+.reveal-on-scroll[data-stagger='true'] > * {
+  opacity: 0;
+  filter: blur(8px);
+  transform: translate3d(0, 16px, 0);
   transition:
-    transform 0.35s cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 0.7s var(--ease-spring),
+    filter 0.7s var(--ease-spring),
+    transform 0.7s var(--ease-spring);
+  transition-delay: calc(var(--reveal-index, 0) * 60ms);
+}
+.reveal-on-scroll[data-stagger='true'].is-visible > * {
+  opacity: 1;
+  filter: blur(0);
+  transform: translate3d(0, 0, 0);
+}
+
+/* Per-word blur-in for hero headline (Task 4 / 15). */
+@keyframes word-blur-in {
+  0% {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+.word-blur {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(8px);
+  transform: translateY(12px);
+  animation: word-blur-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--word-delay, 0ms);
+}
+
+/* One-shot border shimmer on first paint (Quick Find card, Task 7). */
+@keyframes border-shimmer {
+  0% {
+    background-position: -200% 0;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    background-position: 200% 0;
+    opacity: 0;
+  }
+}
+
+.quick-find-shimmer::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    transparent 40%,
+    color-mix(in oklab, var(--primary) 65%, white) 50%,
+    transparent 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: border-shimmer 1.6s ease-out 0.4s 1 forwards;
+  pointer-events: none;
+}
+
+.quick-find-glow {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--primary) 15%, transparent),
+    inset 0 30px 60px -30px color-mix(in oklab, var(--primary) 18%, transparent);
+}
+
+/* Magnetic-style CTA (Task 15): pointer-pull + soft lift + depth on hover.
+ * Hook updates --magnetic-x / --magnetic-y; CSS composes them with scale + lift. */
+.magnetic-btn {
+  --magnetic-x: 0px;
+  --magnetic-y: 0px;
+  --magnetic-lift: 0px;
+  --magnetic-scale: 1;
+  transform: translate3d(var(--magnetic-x), calc(var(--magnetic-y) + var(--magnetic-lift)), 0) scale(var(--magnetic-scale));
+  transition:
+    transform 0.35s var(--ease-spring),
     box-shadow 0.35s ease;
+  will-change: transform;
 }
 .magnetic-btn:hover {
-  transform: translateY(-2px);
+  --magnetic-lift: -2px;
+  --magnetic-scale: 1.02;
 }
 .magnetic-btn:active {
-  transform: translateY(0) scale(0.98);
+  --magnetic-lift: 0px;
+  --magnetic-scale: 0.98;
 }
 
 /* Premium interactive surfaces */
@@ -266,6 +393,22 @@
 .interactive-card-lift:hover {
   transform: translateY(-4px) scale(1.01);
   box-shadow: 0 24px 48px -12px oklch(0.2 0.02 260 / 0.12);
+}
+
+/* Disable glass effects for users who prefer reduced transparency (Task 16). */
+@media (prefers-reduced-transparency: reduce) {
+  :root,
+  .dark {
+    --glass-bg: var(--glass-solid-bg);
+    --glass-bg-strong: var(--glass-solid-bg);
+    --glass-border: var(--border);
+    --glass-blur: 0px;
+  }
+  .glass-surface,
+  .glass-surface-elevated {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -285,18 +428,39 @@
   .fluid-link {
     transition: none;
   }
-  .reveal-on-scroll {
+  .reveal-on-scroll,
+  .reveal-on-scroll[data-stagger='true'] > * {
     opacity: 1;
     transform: none;
+    filter: none;
+    transition: none;
   }
   .animate-blob,
   .animate-blob-reverse {
     animation: none;
   }
+  .word-blur {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    animation: none;
+  }
+  .quick-find-shimmer::before {
+    animation: none;
+    opacity: 0;
+  }
   .interactive-card-lift:hover,
-  .magnetic-btn:hover,
   .fluid-action:hover,
   .fluid-link:hover {
+    transform: none;
+  }
+  .magnetic-btn,
+  .magnetic-btn:hover,
+  .magnetic-btn:active {
+    --magnetic-x: 0px;
+    --magnetic-y: 0px;
+    --magnetic-lift: 0px;
+    --magnetic-scale: 1;
     transform: none;
   }
 }

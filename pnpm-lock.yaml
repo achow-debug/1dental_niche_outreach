@@ -134,6 +134,9 @@ importers:
       react:
         specifier: ^19
         version: 19.2.5
+      react-compare-slider:
+        specifier: ^4.0.0
+        version: 4.0.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       react-day-picker:
         specifier: 9.13.2
         version: 9.13.2(react@19.2.5)
@@ -2032,6 +2035,13 @@ packages:
 
   prop-types@15.8.1:
     resolution: {integrity: sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==}
+
+  react-compare-slider@4.0.0:
+    resolution: {integrity: sha512-XNpwfWa8OHvJZIsC+ywhjpRWX8VCY8fIavQ82R63Tever1pQndhicr0ecDuU69GjA+YjesoV7LX3QnKsECtMDw==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      react: '>=16.8'
+      react-dom: '>=16.8'
 
   react-day-picker@9.13.2:
     resolution: {integrity: sha512-IMPiXfXVIAuR5Yk58DDPBC8QKClrhdXV+Tr/alBrwrHUw0qDDYB1m5zPNuTnnPIr/gmJ4ChMxmtqPdxm8+R4Eg==}
@@ -3939,6 +3949,11 @@ snapshots:
       loose-envify: 1.4.0
       object-assign: 4.1.1
       react-is: 16.13.1
+
+  react-compare-slider@4.0.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5):
+    dependencies:
+      react: 19.2.5
+      react-dom: 19.2.5(react@19.2.5)
 
   react-day-picker@9.13.2(react@19.2.5):
     dependencies:

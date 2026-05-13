@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { LayoutDashboard, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getDashboardHref } from '@/lib/dashboard-href'
@@ -26,6 +26,8 @@ type Props = {
 
 export function HeaderAuthSection({ variant, onNavigate }: Props) {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [userId, setUserId] = useState<string | null>(null)
   const [email, setEmail] = useState<string | null>(null)
   const [fullName, setFullName] = useState<string | null>(null)
@@ -84,28 +86,28 @@ export function HeaderAuthSection({ variant, onNavigate }: Props) {
   const initial = getProfileInitialLetter(fullName, email)
   const dashboardHref = getDashboardHref(role)
 
+  const openLoginModal = () => {
+    const params = new URLSearchParams(searchParams?.toString() ?? '')
+    params.set('login', '1')
+    const search = params.toString()
+    onNavigate?.()
+    router.replace(`${pathname}${search ? `?${search}` : ''}`, { scroll: false })
+  }
+
   if (!userId) {
-    if (variant === 'desktop') {
-      return (
-        <Link
-          href="/login"
-          className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-        >
-          Log in
-        </Link>
-      )
-    }
-    if (variant === 'mobile-toolbar') {
-      return null
-    }
+    // The header (Task 3) and mobile sheet now own the "Log in" entry — we surface
+    // nothing for the desktop or drawer slots when logged out, and stay invisible
+    // in the mobile toolbar to keep the bar compact.
+    if (variant === 'desktop') return null
+    if (variant === 'mobile-toolbar') return null
     return (
-      <Link
-        href="/login"
-        onClick={onNavigate}
-        className="block py-2 text-center text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+      <button
+        type="button"
+        onClick={openLoginModal}
+        className="block w-full py-2 text-center text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
         Log in
-      </Link>
+      </button>
     )
   }
 

@@ -1,35 +1,46 @@
 'use client'
 
 import { useCallback, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { prefersReducedMotion } from '@/lib/prefers-reduced-motion'
 import { Header } from '@/components/header'
 import { Hero } from '@/components/hero'
 import { LandingQuickFind } from '@/components/landing-quick-find'
-import { AuthorityBand } from '@/components/authority-band'
-import { SmileQuiz } from '@/components/smile-quiz'
-import { WhyChooseUs } from '@/components/why-choose-us'
-import { Treatments } from '@/components/treatments'
-import { TreatmentGallery } from '@/components/treatment-gallery'
-import { ComfortMenu } from '@/components/comfort-menu'
-import { OurPromise } from '@/components/our-promise'
-import { NervousPatients } from '@/components/nervous-patients'
-import { SocialProof } from '@/components/social-proof'
-import { HowItWorks } from '@/components/how-it-works'
-import { MeetDentist } from '@/components/meet-dentist'
 import { FAQSection } from '@/components/faq-section'
-import { PricingSection } from '@/components/pricing-section'
-import { BookingLeadModal } from '@/components/booking-lead-modal'
-import { BookCallSection } from '@/components/book-call-section'
-import { FinalCTA } from '@/components/final-cta'
 import { Footer } from '@/components/footer'
 import { LandingBackToTop } from '@/components/landing-back-to-top'
 import { MobilestickyCTA } from '@/components/mobile-sticky-cta'
 import { ScrollReveal } from '@/components/scroll-reveal'
-import { SuitabilityChecker } from '@/components/suitability-checker'
 import type { LandingCatalogItem } from '@/lib/landing/load-public-catalog'
 import type { LandingBookClickHandler } from '@/lib/landing/book-cta'
 import type { LeadSchedulingIntent } from '@/lib/leads/lead-questions'
+
+// Below-fold + interactive surfaces — keep them off the critical path for LCP (Task 17).
+const ConcernPicker = dynamic(
+  () => import('@/components/concern-picker').then((m) => m.ConcernPicker),
+  { ssr: false },
+)
+const ProofSlider = dynamic(
+  () => import('@/components/proof-slider').then((m) => m.ProofSlider),
+  { ssr: false },
+)
+const WhatYouGet = dynamic(
+  () => import('@/components/what-you-get').then((m) => m.WhatYouGet),
+  { ssr: false },
+)
+const AmeliaNote = dynamic(
+  () => import('@/components/amelia-note').then((m) => m.AmeliaNote),
+  { ssr: false },
+)
+const BookingLeadModal = dynamic(
+  () => import('@/components/booking-lead-modal').then((m) => m.BookingLeadModal),
+  { ssr: false },
+)
+const LoginModal = dynamic(
+  () => import('@/components/auth/login-modal').then((m) => m.LoginModal),
+  { ssr: false },
+)
 
 type Props = {
   isLoggedIn: boolean
@@ -47,9 +58,9 @@ function bookDestinationPath(treatmentSlug?: string): string {
 
 export function LandingHomeClient({
   isLoggedIn,
-  catalogItems,
+  catalogItems: _catalogItems,
   initialSchedulingOpen = false,
-  initialSchedulingIntent = 'demo',
+  initialSchedulingIntent = 'website_audit',
 }: Props) {
   const router = useRouter()
   const [schedulingOpen, setSchedulingOpen] = useState(initialSchedulingOpen)
@@ -69,7 +80,7 @@ export function LandingHomeClient({
   )
 
   const handleLearnMoreClick = () => {
-    const section = document.getElementById('why-us')
+    const section = document.getElementById('proof')
     const behavior = prefersReducedMotion() ? 'auto' : 'smooth'
     section?.scrollIntoView({ behavior })
   }
@@ -87,77 +98,33 @@ export function LandingHomeClient({
     >
       <Header onBookClick={handleBookClick} onOpenSchedulingModal={openSchedulingModal} />
 
-      <Hero onBookClick={handleBookClick} onLearnMoreClick={handleLearnMoreClick} />
+      <Hero onOpenSchedulingModal={openSchedulingModal} onLearnMoreClick={handleLearnMoreClick} />
 
-      <LandingQuickFind />
+      <LandingQuickFind onOpenSchedulingModal={openSchedulingModal} />
 
       <ScrollReveal>
-        <AuthorityBand />
-      </ScrollReveal>
-
-      <ScrollReveal className="py-8 md:py-12">
-        <SmileQuiz onBookClick={handleBookClick} />
+        <ConcernPicker onOpenSchedulingModal={openSchedulingModal} />
       </ScrollReveal>
 
       <ScrollReveal>
-        <WhyChooseUs />
+        <ProofSlider onOpenSchedulingModal={openSchedulingModal} />
       </ScrollReveal>
 
       <ScrollReveal>
-        <TreatmentGallery />
+        <WhatYouGet onOpenSchedulingModal={openSchedulingModal} />
       </ScrollReveal>
 
       <ScrollReveal>
-        <Treatments catalogItems={catalogItems} onBookClick={handleBookClick} />
-      </ScrollReveal>
-
-      <ScrollReveal>
-        <SuitabilityChecker onBookClick={handleBookClick} />
-      </ScrollReveal>
-
-      <ScrollReveal>
-        <PricingSection onBookClick={handleBookClick} />
-      </ScrollReveal>
-
-      <ScrollReveal>
-        <ComfortMenu />
-      </ScrollReveal>
-
-      <ScrollReveal>
-        <HowItWorks onBookClick={handleBookClick} />
-      </ScrollReveal>
-
-      <ScrollReveal>
-        <SocialProof />
-      </ScrollReveal>
-
-      <ScrollReveal>
-        <OurPromise />
-      </ScrollReveal>
-
-      <ScrollReveal>
-        <MeetDentist />
-      </ScrollReveal>
-
-      <ScrollReveal>
-        <NervousPatients onBookClick={handleBookClick} />
+        <AmeliaNote />
       </ScrollReveal>
 
       <ScrollReveal>
         <FAQSection />
       </ScrollReveal>
 
-      <ScrollReveal>
-        <BookCallSection onOpenSchedulingModal={openSchedulingModal} />
-      </ScrollReveal>
-
-      <ScrollReveal>
-        <FinalCTA onBookClick={handleBookClick} />
-      </ScrollReveal>
-
       <Footer onBookClick={handleBookClick} onOpenSchedulingModal={openSchedulingModal} />
 
-      <MobilestickyCTA onBookClick={handleBookClick} />
+      <MobilestickyCTA onOpenSchedulingModal={openSchedulingModal} />
 
       <LandingBackToTop />
 
@@ -168,6 +135,8 @@ export function LandingHomeClient({
         onOpenChange={setSchedulingOpen}
         intent={schedulingIntent}
       />
+
+      <LoginModal />
     </main>
   )
 }

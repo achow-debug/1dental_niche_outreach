@@ -33,7 +33,7 @@ export default async function Home({ searchParams }: HomeProps) {
     schedule === 'demo'
 
   const initialSchedulingIntent: LeadSchedulingIntent =
-    schedule === 'audit' ? 'website_audit' : 'demo'
+    schedule === 'demo' ? 'demo' : 'website_audit'
 
   return (
     <LandingHomeClient
