@@ -1,0 +1,53 @@
+AUDIT REQUEST RECEIVED
+
+We've received your audit request, {{ $json.body.firstName || 'there' }}.
+
+We'll review your site and look at the key areas that usually affect
+enquiries and bookings: trust, mobile experience, page clarity,
+calls-to-action, and how easy it is for visitors to take the next step.
+
+---
+
+REQUEST SUMMARY
+
+Name: {{ $json.body.fullName || $json.body.name || '—' }}
+Website URL: {{ $json.body.websiteUrl || '—' }}
+Business type: {{ $json.body.businessType || '—' }}
+Biggest issue / goal: {{ $json.body.biggestIssue || '—' }}
+
+If anything in this summary is wrong, just reply to this email and we'll
+update it.
+
+---
+
+WHAT HAPPENS NEXT
+
+We'll review your website and send over your audit within 2 business days.
+You don't need to do anything else right now.
+
+Once the audit is ready, we'll email clear, prioritised recommendations
+to {{ $json.body.email }} that you can use to improve the website.
+
+---
+
+OPTIONAL — 15-MINUTE WALKTHROUGH
+
+If you'd rather go through the findings together, you can book a short
+call. On the walkthrough we'll talk through the 2-3 highest-impact
+changes specific to your site, so you leave with clear next steps.
+
+Book a 15-min audit walkthrough:
+https://calendly.com/achow-standoutgroup/15min-audit-walkthrough?utm_source=email&utm_medium=audit_confirmation&utm_campaign=walkthrough_soft_cta
+
+— Alex, Standout Group
+
+---
+
+You're receiving this because you requested a free website audit from
+Standout Group.
+
+Unsubscribe from marketing emails:
+https://lwa24ysc.app.n8n.cloud/webhook/ac3e9b6b-1a6e-4bdc-8fce-041efad6f704?type=marketing&email={{ encodeURIComponent($json.body.email) }}
+
+You can unsubscribe from future marketing emails at any time. You'll
+still receive your requested audit.

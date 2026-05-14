@@ -45,22 +45,24 @@ const websiteUrlSchema = z
   .pipe(z.string().url('Enter a valid URL (e.g. https://yourclinic.co.uk).'))
 
 const formSchema = z.object({
-  bottleneck: z.string().trim().max(500).optional(),
+  biggestIssue: z.string().trim().max(500).optional(),
   websiteUrl: websiteUrlSchema,
   name: z.string().trim().min(1, 'Your name is required.').max(200),
   email: z.string().trim().min(1, 'Email is required.').email('Enter a valid email address.').max(320),
-  practiceName: z.string().trim().min(1, 'Practice name is required.').max(200),
+  practiceName: z.string().trim().max(200).optional(),
+  businessType: z.string().trim().max(200).optional(),
   honeypot: z.string().max(200).optional(),
 })
 
 type FormValues = z.infer<typeof formSchema>
 
 const emptyValues: FormValues = {
-  bottleneck: '',
+  biggestIssue: '',
   websiteUrl: '',
   name: '',
   email: '',
   practiceName: '',
+  businessType: '',
   honeypot: '',
 }
 
@@ -77,6 +79,7 @@ export function BookingLeadModal({ open, onOpenChange, intent, context }: Props)
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -108,9 +111,9 @@ export function BookingLeadModal({ open, onOpenChange, intent, context }: Props)
         })
         lastTrackedOpenRef.current = true
       }
-      // Pre-fill the bottleneck field with whatever the visitor typed into
+      // Pre-fill the biggest-issue field with whatever the visitor typed into
       // Quick Find so they don't have to retype it inside the modal.
-      reset({ ...emptyValues, bottleneck: context?.bottleneck ?? '' })
+      reset({ ...emptyValues, biggestIssue: context?.bottleneck ?? '' })
     } else {
       lastTrackedOpenRef.current = false
     }
@@ -130,14 +133,32 @@ export function BookingLeadModal({ open, onOpenChange, intent, context }: Props)
     setSubmitError(null)
     setIsScanning(false)
 
+    const isAuditSubmit = intent === 'website_audit'
+    const trimmedBusinessType = values.businessType?.trim() ?? ''
+    const trimmedBiggestIssue = values.biggestIssue?.trim() ?? ''
+    const trimmedPracticeName = values.practiceName?.trim() ?? ''
+
+    if (isAuditSubmit) {
+      let hasError = false
+      if (!trimmedBusinessType) {
+        setError('businessType', { type: 'manual', message: 'Business type is required.' })
+        hasError = true
+      }
+      if (!trimmedBiggestIssue) {
+        setError('biggestIssue', { type: 'manual', message: 'Tell us your biggest issue or goal.' })
+        hasError = true
+      }
+      if (hasError) return
+    } else if (!trimmedPracticeName) {
+      setError('practiceName', { type: 'manual', message: 'Practice name is required.' })
+      return
+    }
+
     const privacyPolicyUrl = `${window.location.origin}/privacy`
-    const trimmedBottleneck = values.bottleneck?.trim() ?? ''
-    const body = {
+    const baseBody = {
       name: values.name.trim(),
       email: values.email.trim(),
       websiteUrl: values.websiteUrl.trim(),
-      practiceName: values.practiceName.trim(),
-      ...(trimmedBottleneck ? { bottleneck: trimmedBottleneck } : {}),
       consent: {
         gdpr: true as const,
         privacyPolicyUrl,
@@ -145,6 +166,16 @@ export function BookingLeadModal({ open, onOpenChange, intent, context }: Props)
       },
       honeypot: values.honeypot ?? '',
     }
+    const body = isAuditSubmit
+      ? {
+          ...baseBody,
+          businessType: trimmedBusinessType,
+          biggestIssue: trimmedBiggestIssue,
+        }
+      : {
+          ...baseBody,
+          practiceName: trimmedPracticeName,
+        }
 
     try {
       const path =
@@ -186,7 +217,7 @@ export function BookingLeadModal({ open, onOpenChange, intent, context }: Props)
     ? 'Get your free website audit'
     : 'Where should we send your demo?'
   const formDescription = isAudit
-    ? 'Tell us where to send it and we’ll have your audit ready in a minute.'
+    ? 'Here’s what you can let us know to get the best audit.'
     : 'Enter your details and we’ll follow up at this address.'
   const submitLabel = isAudit ? 'Get my free audit' : 'Get my demo'
 
@@ -203,7 +234,7 @@ export function BookingLeadModal({ open, onOpenChange, intent, context }: Props)
           </DialogTitle>
           <DialogDescription className="text-pretty">
             {success
-              ? `We’ll email your audit to ${confirmedEmail} within the next business day.`
+              ? `We’ll email your audit to ${confirmedEmail} within 2 business days.`
               : formDescription}
           </DialogDescription>
         </DialogHeader>
@@ -241,37 +272,6 @@ export function BookingLeadModal({ open, onOpenChange, intent, context }: Props)
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="audit-bottleneck">Your biggest bottleneck (optional)</Label>
-                <textarea
-                  id="audit-bottleneck"
-                  rows={3}
-                  maxLength={500}
-                  placeholder="e.g. sales team waste time chasing leads that never convert"
-                  className="flex w-full rounded-xl border border-input bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm"
-                  aria-invalid={errors.bottleneck ? 'true' : 'false'}
-                  {...register('bottleneck')}
-                />
-                {errors.bottleneck ? (
-                  <p className="text-xs text-destructive">{errors.bottleneck.message}</p>
-                ) : null}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="audit-website-url">Website URL</Label>
-                <Input
-                  id="audit-website-url"
-                  type="url"
-                  inputMode="url"
-                  autoComplete="url"
-                  placeholder="https://yourclinic.co.uk"
-                  className="rounded-xl"
-                  aria-invalid={errors.websiteUrl ? 'true' : 'false'}
-                  {...register('websiteUrl')}
-                />
-                {errors.websiteUrl ? (
-                  <p className="text-xs text-destructive">{errors.websiteUrl.message}</p>
-                ) : null}
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="audit-name">Your name</Label>
                 <Input
                   id="audit-name"
@@ -302,19 +302,69 @@ export function BookingLeadModal({ open, onOpenChange, intent, context }: Props)
                 ) : null}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="audit-practice">Practice name</Label>
+                <Label htmlFor="audit-website-url">Website URL</Label>
                 <Input
-                  id="audit-practice"
-                  autoComplete="organization"
-                  placeholder="Carter Dental Studio"
+                  id="audit-website-url"
+                  type="url"
+                  inputMode="url"
+                  autoComplete="url"
+                  placeholder={isAudit ? 'e.g. standoutgroup.net' : 'https://yourclinic.co.uk'}
                   className="rounded-xl"
-                  aria-invalid={errors.practiceName ? 'true' : 'false'}
-                  {...register('practiceName')}
+                  aria-invalid={errors.websiteUrl ? 'true' : 'false'}
+                  {...register('websiteUrl')}
                 />
-                {errors.practiceName ? (
-                  <p className="text-xs text-destructive">{errors.practiceName.message}</p>
+                {errors.websiteUrl ? (
+                  <p className="text-xs text-destructive">{errors.websiteUrl.message}</p>
                 ) : null}
               </div>
+              {isAudit ? (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="audit-business-type">Business type</Label>
+                    <Input
+                      id="audit-business-type"
+                      autoComplete="organization"
+                      placeholder="e.g. Dental Clinic"
+                      className="rounded-xl"
+                      aria-invalid={errors.businessType ? 'true' : 'false'}
+                      {...register('businessType')}
+                    />
+                    {errors.businessType ? (
+                      <p className="text-xs text-destructive">{errors.businessType.message}</p>
+                    ) : null}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="audit-biggest-issue">Biggest issue or goal</Label>
+                    <textarea
+                      id="audit-biggest-issue"
+                      rows={3}
+                      maxLength={500}
+                      placeholder="e.g. poor loading speed, lack of mobile optimisation"
+                      className="flex w-full rounded-xl border border-input bg-transparent px-3 py-2 text-base shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:border-destructive aria-invalid:ring-destructive/20 md:text-sm"
+                      aria-invalid={errors.biggestIssue ? 'true' : 'false'}
+                      {...register('biggestIssue')}
+                    />
+                    {errors.biggestIssue ? (
+                      <p className="text-xs text-destructive">{errors.biggestIssue.message}</p>
+                    ) : null}
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="audit-practice">Practice name</Label>
+                  <Input
+                    id="audit-practice"
+                    autoComplete="organization"
+                    placeholder="Carter Dental Studio"
+                    className="rounded-xl"
+                    aria-invalid={errors.practiceName ? 'true' : 'false'}
+                    {...register('practiceName')}
+                  />
+                  {errors.practiceName ? (
+                    <p className="text-xs text-destructive">{errors.practiceName.message}</p>
+                  ) : null}
+                </div>
+              )}
               <p className="pt-1 text-xs text-muted-foreground">
                 By submitting, you agree to our{' '}
                 <Link href="/privacy" className="text-primary underline-offset-2 hover:underline">
