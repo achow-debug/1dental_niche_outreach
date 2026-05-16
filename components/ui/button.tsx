@@ -10,7 +10,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        /** Primary landing-page CTA: Book Website Audit (hero, header, footer, sticky bar) */
+        /** Primary landing-page CTA: Get my free website audit (hero, header, footer, sticky bar) */
         cta:
           'rounded-full bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]',
         destructive:

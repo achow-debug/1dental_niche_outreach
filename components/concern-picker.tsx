@@ -35,10 +35,10 @@ export function ConcernPicker({ onOpenSchedulingModal }: Props) {
             id="concern-picker-heading"
             className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
           >
-            Common website bottlenecks costing patients
+            Common website bottlenecks on your clinic site
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-balance text-base text-muted-foreground">
-            This is what we usually see hurting other practices’ sites — sound familiar?
+            This is what we usually see hurting other practices’ sites — sound familiar on yours?
           </p>
         </div>
 
@@ -68,7 +68,7 @@ export function ConcernPicker({ onOpenSchedulingModal }: Props) {
             variant="cta"
             className="h-12 px-8 text-sm font-semibold"
           >
-            Book Website Audit
+            Request your free audit
           </MagneticCTAButton>
         </div>
       </div>

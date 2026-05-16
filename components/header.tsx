@@ -22,8 +22,7 @@ type MoreLink = {
 }
 
 const moreLinks: MoreLink[] = [
-  { label: "Treatments", href: "#treatments" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "What we build", href: "#capabilities" },
   { label: "Reviews", href: "#proof" },
 ]
 
@@ -156,7 +155,7 @@ export function Header({ onBookClick: _onBookClick, onOpenSchedulingModal }: Hea
                 variant="cta"
                 className="h-11 min-w-[44px] px-5 text-sm font-semibold whitespace-nowrap"
               >
-                Book Website Audit
+                Get my free website audit
               </MagneticCTAButton>
             </div>
 
@@ -246,7 +245,7 @@ export function Header({ onBookClick: _onBookClick, onOpenSchedulingModal }: Hea
                 variant="cta"
                 className="h-14 w-full rounded-2xl text-base font-semibold shadow-lg shadow-primary/20"
               >
-                Book Website Audit
+                Get my free website audit
               </MagneticCTAButton>
             </div>
           </div>

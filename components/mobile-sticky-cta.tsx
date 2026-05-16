@@ -65,7 +65,7 @@ export function MobilestickyCTA({ onOpenSchedulingModal }: MobileStickyCTAProps)
         variant="cta"
         className="h-12 w-full text-sm font-semibold shadow-lg shadow-primary/20"
       >
-        Book Website Audit
+        Get my free website audit
       </MagneticCTAButton>
     </div>
   )

@@ -268,7 +268,7 @@ function AfterMockup() {
           fontSize="16"
           fill="#FFFFFF"
         >
-          Book Website Audit
+          Get my free audit
         </text>
 
         <text
@@ -300,16 +300,13 @@ function AfterMockup() {
             01
           </text>
           <text x="144" y="640" fontFamily="'Manrope', system-ui, sans-serif" fontWeight="700" fontSize="18" fill="#1F2A2F">
-            Speed audit
+            Faster mobile
           </text>
           <text x="144" y="666" fontFamily="'Manrope', system-ui, sans-serif" fontSize="13" fill="#5C6B6E">
-            Find slow pages before
+            Quick loads on your
           </text>
           <text x="144" y="686" fontFamily="'Manrope', system-ui, sans-serif" fontSize="13" fill="#5C6B6E">
-            patients bounce.
-          </text>
-          <text x="144" y="714" fontFamily="'Manrope', system-ui, sans-serif" fontWeight="600" fontSize="13" fill="#3F7A7A">
-            From £149
+            clinic site.
           </text>
 
           <rect x="448" y="552" width="304" height="180" rx="22" fill="url(#after-hero-card)" stroke="#E0E8E6" />
@@ -326,16 +323,13 @@ function AfterMockup() {
             02
           </text>
           <text x="472" y="640" fontFamily="'Manrope', system-ui, sans-serif" fontWeight="700" fontSize="18" fill="#1F2A2F">
-            Lead-flow audit
+            Clear booking
           </text>
           <text x="472" y="666" fontFamily="'Manrope', system-ui, sans-serif" fontSize="13" fill="#5C6B6E">
-            Stop losing enquiries
+            One obvious path to
           </text>
           <text x="472" y="686" fontFamily="'Manrope', system-ui, sans-serif" fontSize="13" fill="#5C6B6E">
-            at the booking step.
-          </text>
-          <text x="472" y="714" fontFamily="'Manrope', system-ui, sans-serif" fontWeight="600" fontSize="13" fill="#3F7A7A">
-            From £199
+            book on your site.
           </text>
 
           <rect x="776" y="552" width="304" height="180" rx="22" fill="url(#after-hero-card)" stroke="#E0E8E6" />
@@ -352,16 +346,13 @@ function AfterMockup() {
             03
           </text>
           <text x="800" y="640" fontFamily="'Manrope', system-ui, sans-serif" fontWeight="700" fontSize="18" fill="#1F2A2F">
-            Mobile UX audit
+            Trust signals
           </text>
           <text x="800" y="666" fontFamily="'Manrope', system-ui, sans-serif" fontSize="13" fill="#5C6B6E">
-            Make every tap feel
+            Reviews and team where
           </text>
           <text x="800" y="686" fontFamily="'Manrope', system-ui, sans-serif" fontSize="13" fill="#5C6B6E">
-            premium and obvious.
-          </text>
-          <text x="800" y="714" fontFamily="'Manrope', system-ui, sans-serif" fontWeight="600" fontSize="13" fill="#3F7A7A">
-            From £249
+            patients expect them.
           </text>
         </g>
 
@@ -412,10 +403,11 @@ export function ProofSlider({ onOpenSchedulingModal }: Props) {
             id="proof-slider-heading"
             className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
           >
-            See what an audit actually changes.
+            See what your clinic&apos;s site could look like.
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-balance text-base text-muted-foreground">
-            Drag the slider to compare a real clinic’s old site with the rebuild our audit kicked off.
+            Drag the slider to compare a practice like yours — old site vs the rebuild we deliver for private
+            clinics.
           </p>
         </div>
 
@@ -477,7 +469,7 @@ export function ProofSlider({ onOpenSchedulingModal }: Props) {
             variant="cta"
             className="h-12 px-8 text-sm font-semibold"
           >
-            Book Website Audit
+            Request your free audit
           </MagneticCTAButton>
         </div>
       </div>

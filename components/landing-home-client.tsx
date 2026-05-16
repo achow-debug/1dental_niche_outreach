@@ -29,8 +29,8 @@ const WhatYouGet = dynamic(
   () => import('@/components/what-you-get').then((m) => m.WhatYouGet),
   { ssr: false },
 )
-const AmeliaNote = dynamic(
-  () => import('@/components/amelia-note').then((m) => m.AmeliaNote),
+const DemoOutcomes = dynamic(
+  () => import('@/components/demo-outcomes').then((m) => m.DemoOutcomes),
   { ssr: false },
 )
 const BookingLeadModal = dynamic(
@@ -122,7 +122,7 @@ export function LandingHomeClient({
       </ScrollReveal>
 
       <ScrollReveal>
-        <AmeliaNote />
+        <DemoOutcomes />
       </ScrollReveal>
 
       <ScrollReveal>

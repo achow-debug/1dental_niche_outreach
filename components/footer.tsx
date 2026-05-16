@@ -36,7 +36,8 @@ export function Footer({ onBookClick: _onBookClick, onOpenSchedulingModal }: Foo
         </Link>
 
         <p className="max-w-md text-pretty text-sm text-muted-foreground">
-          A 10-minute audit shows exactly why your dental site is costing you patients — and how to fix it.
+          Request a free audit of your clinic website — we&apos;ll email what to fix within 2 business days. No
+          charge for the initial review.
         </p>
 
         <MagneticCTAButton
@@ -45,7 +46,7 @@ export function Footer({ onBookClick: _onBookClick, onOpenSchedulingModal }: Foo
           variant="cta"
           className="h-12 px-8 text-sm font-semibold"
         >
-          Book Website Audit
+          Get my free website audit
         </MagneticCTAButton>
 
         <ul className="flex items-center justify-center gap-3" aria-label="Carter Dental on social media">

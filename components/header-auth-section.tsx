@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { LayoutDashboard, User } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient, isSupabaseBrowserConfigured } from '@/lib/supabase/client'
 import { getDashboardHref } from '@/lib/dashboard-href'
 import { getAvatarSignedUrl } from '@/lib/avatar'
 import { getProfileInitialLetter } from '@/lib/profile-initial'
@@ -36,6 +36,7 @@ export function HeaderAuthSection({ variant, onNavigate }: Props) {
   const [signingOut, setSigningOut] = useState(false)
 
   const refreshSession = useCallback(async () => {
+    if (!isSupabaseBrowserConfigured()) return
     const supabase = createClient()
     const {
       data: { user },
@@ -63,6 +64,7 @@ export function HeaderAuthSection({ variant, onNavigate }: Props) {
   }, [])
 
   useEffect(() => {
+    if (!isSupabaseBrowserConfigured()) return
     void refreshSession()
     const supabase = createClient()
     const {
@@ -74,6 +76,7 @@ export function HeaderAuthSection({ variant, onNavigate }: Props) {
   }, [refreshSession])
 
   async function handleSignOut() {
+    if (!isSupabaseBrowserConfigured()) return
     setSigningOut(true)
     const supabase = createClient()
     await supabase.auth.signOut()

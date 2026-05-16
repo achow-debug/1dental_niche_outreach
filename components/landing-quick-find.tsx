@@ -33,7 +33,7 @@ export function LandingQuickFind({ onOpenSchedulingModal }: Props) {
           id="quick-find-heading"
           className="text-center text-lg font-semibold tracking-tight text-foreground sm:text-xl"
         >
-          Let us help you get started
+          Tell us what&apos;s holding your clinic site back
         </h2>
 
         <form

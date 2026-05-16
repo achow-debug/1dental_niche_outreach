@@ -11,7 +11,8 @@ interface HeroProps {
 }
 
 const HEADLINE = "Your dental site is costing you patients."
-const SUBLINE = "A 10-minute audit shows you exactly why — and how to fix it."
+const SUBLINE =
+  "Request a free audit of your clinic site — we show you exactly why you are losing patients and how to fix it."
 const TRUST = "Trusted by 40+ UK private practices"
 
 export function Hero({ onOpenSchedulingModal, onLearnMoreClick }: HeroProps) {
@@ -80,7 +81,7 @@ export function Hero({ onOpenSchedulingModal, onLearnMoreClick }: HeroProps) {
             variant="cta"
             className="h-14 px-8 text-base font-semibold shadow-xl shadow-primary/20 hover:shadow-2xl"
           >
-            Book Website Audit
+            Get my free website audit
           </MagneticCTAButton>
           <button
             type="button"

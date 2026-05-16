@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: 'Carter Dental Studio | Dental Website Audits for UK Private Clinics',
   description:
-    'A 10-minute audit shows you exactly why your dental site is costing you patients — and how to fix it. Trusted by 40+ UK private practices.',
+    'Free website audit for your dental clinic — see why your site is costing you patients and what to fix. Conversion-led sites for UK private practices.',
   keywords: [
     'dental website audit',
     'dentist website redesign',
@@ -56,16 +56,16 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Free Website Audit for Dental Clinics | Carter Dental',
     description:
-      'A 10-minute audit shows you exactly why your dental site is costing you patients — and how to fix it.',
+      'Request a free audit of your clinic website — conversion, booking flow, and mobile UX for UK private practices.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Free Website Audit for Dental Clinics | Carter Dental',
     description:
-      'A 10-minute audit shows you exactly why your dental site is costing you patients — and how to fix it.',
+      'Request a free audit of your clinic website — conversion, booking flow, and mobile UX for UK private practices.',
   },
-  authors: [{ name: 'Dr. Amelia Carter' }],
+  authors: [{ name: 'Standout Group' }],
   icons: {
     icon: [
       {

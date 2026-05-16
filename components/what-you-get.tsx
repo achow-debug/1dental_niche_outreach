@@ -11,49 +11,50 @@ type Props = {
 const CARDS = [
   {
     icon: Gauge,
-    title: 'Speed audit',
-    benefit: 'Find the slow pages before patients bounce.',
-    price: 'From £149',
+    title: 'Faster mobile experience',
+    benefit:
+      'Patients on phones get a site that loads quickly and feels modern on your clinic site — fewer bounces before they book.',
   },
   {
     icon: LineChart,
-    title: 'Lead-flow audit',
-    benefit: 'Stop losing enquiries at the booking step.',
-    price: 'From £199',
+    title: 'Clear booking path',
+    benefit:
+      'One obvious route from your homepage to enquiry or online booking — no hunting for your phone number.',
   },
   {
     icon: Smartphone,
-    title: 'Mobile UX audit',
-    benefit: 'Make every tap feel premium and obvious.',
-    price: 'From £249',
+    title: 'Trust at first glance',
+    benefit:
+      'Credentials, reviews, and team photos where new patients expect them — so they choose your clinic with confidence.',
   },
 ] as const
 
 export function WhatYouGet({ onOpenSchedulingModal }: Props) {
   return (
     <section
-      id="pricing"
-      aria-labelledby="what-you-get-heading"
+      id="capabilities"
+      aria-labelledby="capabilities-heading"
       className="px-4 py-16 sm:px-6 md:py-24"
     >
       <div className="mx-auto max-w-5xl">
         <div className="text-center">
           <span className="inline-block rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-            What you get
+            What we build for your clinic
           </span>
           <h2
-            id="what-you-get-heading"
+            id="capabilities-heading"
             className="mt-4 text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
           >
-            Three focused audits. One clear next step.
+            Features that turn visitors into booked patients
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-balance text-base text-muted-foreground">
-            We zero in on the one thing that’s costing you patients today — then hand you a roadmap to fix it.
+            Every clinic site is different — these are the upgrades we implement most often on private
+            practice websites like yours.
           </p>
         </div>
 
         <ul className="mt-10 grid gap-5 md:grid-cols-3">
-          {CARDS.map(({ icon: Icon, title, benefit, price }) => (
+          {CARDS.map(({ icon: Icon, title, benefit }) => (
             <li
               key={title}
               className="group flex h-full flex-col rounded-3xl border border-[var(--glass-border)] bg-[var(--glass-bg)] p-6 shadow-sm backdrop-blur-md transition-all hover:-translate-y-0.5 hover:shadow-lg motion-reduce:hover:translate-y-0"
@@ -63,10 +64,13 @@ export function WhatYouGet({ onOpenSchedulingModal }: Props) {
               </div>
               <h3 className="mt-5 text-xl font-bold tracking-tight text-foreground">{title}</h3>
               <p className="mt-2 text-sm text-muted-foreground">{benefit}</p>
-              <p className="mt-auto pt-6 text-sm font-semibold text-primary">{price}</p>
             </li>
           ))}
         </ul>
+
+        <p className="mx-auto mt-8 max-w-lg text-center text-sm text-muted-foreground">
+          Your first website audit is free — tell us your URL in the form.
+        </p>
 
         <div className="mt-10 flex justify-center">
           <MagneticCTAButton
@@ -75,7 +79,7 @@ export function WhatYouGet({ onOpenSchedulingModal }: Props) {
             variant="cta"
             className="h-12 px-8 text-sm font-semibold"
           >
-            Book Website Audit
+            Request your free audit
           </MagneticCTAButton>
         </div>
       </div>
